@@ -239,4 +239,44 @@ public class NetworkSegment extends EastBrRESTClient{
     private String constructBody(JSONObject params) throws JSONException{
         return "{\"name\" : \""+params.getString("name")+"\", \"fa_endpoint\" : \""+params.getString("fa_endpoint")+"\", \"network_address\" : \""+params.getString("network_address")+"\", \"network_mask\" : \""+params.getString("network_mask")+"\", \"size\" : \""+params.getString("size")+"\", \"vlan_id\" : \""+params.getString("vlan_id")+"\", \"cmp_net_id\" : \""+params.getString("cmp_net_id")+"\"}";
     }
+    
+    public Response addNetSegm(JSONObject j,String baseBBURL)throws WSException {
+        //body=new JSONObject();
+        //logic to get id
+        Response r;
+        String Path="/netsegment";
+        try {
+            r=this.createNetSeg(j, baseBBURL,  "/fednet/northBr/network" ,Path);
+            //id = this.searchNetSegID(netseg, baseFEDSDNURL, fedId, siteId);
+        } catch (Exception ex) {
+            throw new WSException303("SEE_OTHER! The action can't be completed");
+        }
+       //Response r =this.makeSimpleRequest(baseFEDSDNURL+"/fednet/"++"/"+siteId+"/netsegment/"+id, "", "get");
+        try{
+                this.checkResponse(r);//as answer we expect a status code 200
+            }
+            catch(WSException wse){
+                LOGGER.error("Exception occurred in createTenantFA method, the web service has answer with bad status!\n"+wse.getMessage());
+                throw wse;
+            }
+        return r;
+    }
+
+    private Response createNetSeg(JSONObject j, String baseFEDSDNURL, String fednetnorthBrnetwork, String Path) throws WSException {
+        body=j;
+        Response r=this.makeSimpleRequest(baseFEDSDNURL+fednetnorthBrnetwork+Path, body.toString(), "post");
+        
+        try{
+                this.checkResponse(r);//as answer we expect a status code 200
+            }
+            catch(WSException wse){
+                System.out.println(r.readEntity(String.class));
+                LOGGER.error("Exception occurred in createTenantFA method, the web service has answer with bad status!\n"+wse.getMessage());
+                throw wse;
+            }
+        return r;
+        
+    }
+    
+    
 }

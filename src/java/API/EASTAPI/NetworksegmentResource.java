@@ -16,6 +16,8 @@
 package API.EASTAPI;
 
 
+import API.EASTAPI.Clients.EastBrRESTClient;
+import API.EASTAPI.Clients.NetworkSegment;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -43,6 +45,8 @@ import MDBInt.DBMongo;
 import MDBInt.FederatedUser;
 import MDBInt.FederationUser;
 import OSFFMIDM.SimpleIDM;
+import javax.ws.rs.core.Response;
+import org.json.simple.parser.ParseException;
 //import OSFFM_ORC.OrchestrationManager;
 
 
@@ -53,8 +57,9 @@ import OSFFMIDM.SimpleIDM;
  */
 @Path("/fednet/eastBr/network")
 public class NetworksegmentResource {
-
+    
     @Context
+    private String user,password;
     private UriInfo context;
     private SimpleIDM sidm;
     private DBMongo db;
@@ -138,13 +143,41 @@ public class NetworksegmentResource {
                 sidm.setDbName(dbName);  //>>>BEACON: FOR THE MOMENT OUR TESTING DB IS CALLED beacon
                 //sidm.setDbName("beacon");
 
-                FederationUser fu = sidm.getFederationU(OSF_token, OSF_cmp_endpoint);//OSF_cmp_endpoint questo non è usato
+                //FederationUser fu = sidm.getFederationU(OSF_token, OSF_cmp_endpoint);//OSF_cmp_endpoint questo non è usato
 /* //>>>BEACON: CREARE SERVIZIO SUL BEACON BROKER PER INVOCARE QUESTA FUNZIONALITÀ
                 OrchestrationManager om = new OrchestrationManager();
                 response = om.networkSegmentAdd(dbName, fu, OSF_network_segment_id, OSF_cloud, params).toString();
                 
-*/                
-                JSONObject output = (JSONObject) parser.parse(response);
+                
+                
+*/              
+                JSONObject job = new JSONObject(); 
+                JSONObject job_in = new JSONObject(); 
+                JSONObject j_map =new JSONObject(params);
+                job_in.put("token",OSF_token);
+                job_in.put("endpoint", OSF_cmp_endpoint);
+                job.put("fedUser", job_in);
+                job.put("dbName",dbName);
+                job.put("netSeg",OSF_network_segment_id);
+                
+                job.put("CloudName",OSF_cloud);
+                job.put("hashMapParam",j_map);
+                String baseBBURL=""; /////////* OTTENERE BASE URL BB*/////////////
+                /* devo chiamare il put??*/
+                
+                NetworkSegment ns = new NetworkSegment(user, password);
+                Response r;
+                r = ns.addNetSegm(job, baseBBURL);
+                
+                org.json.simple.parser.JSONParser p = new org.json.simple.parser.JSONParser();
+                Object obj = null;
+                try {
+                    obj = p.parse(r.readEntity(String.class));
+                } catch (ParseException ex) {
+                    LOGGER.error("Exception occurred in Parsing JSON returned from FEDSDN \n" + ex.getMessage());
+                }
+                
+                JSONObject output = (JSONObject) obj;
                 reply.append("returncode", output.get("returncode"));
                 reply.append("errormesg", output.get("errormesg"));
                 network_info.put("internalId", (String) ((org.json.JSONArray) output.get("ResponseArray")).getJSONObject(0).get("internalId"));

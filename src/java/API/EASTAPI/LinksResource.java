@@ -14,7 +14,9 @@
 */
 
 package API.EASTAPI;
-
+import API.EASTAPI.Clients.EastBrRESTClient;
+import API.EASTAPI.Clients.Links;
+import static API.EASTAPI.NetworksegmentResource.LOGGER;
 import API.EASTAPI.utils_containers.LinkInfoContainers;
 //import OSFFM_ORC.OrchestrationManager;
 import javax.ws.rs.Consumes;
@@ -31,6 +33,10 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import MDBInt.DBMongo;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import javax.ws.rs.core.Response;
 
 /**
  * REST Web Service
@@ -62,7 +68,7 @@ public class LinksResource {
         JSONParser parser= new JSONParser();
         JSONObject input=null;
         LinkInfoContainers lic=new LinkInfoContainers();
-            
+        String baseBBURL=""; /////* Ricavare url BB*//////////    
         try 
         {
             input=(JSONObject) parser.parse(content);
@@ -82,18 +88,63 @@ public class LinksResource {
             String federationUser = m.getTenantName("token", lic.getToken());
             Integer id = m.getfedsdnFednetID(federationUser);
             String result="";
+            ArrayList<JSONObject> netTables;
+            ArrayList<JSONObject> fa_endPoints;
 /* //>>>BEACON: CREARE SERVIZIO SUL BEACON BROKER PER INVOCARE QUESTA FUNZIONALITÀ
             OrchestrationManager om = new OrchestrationManager();
             String result = om.makeLink(id.longValue(), federationUser, null, m);// null will be substituted with an ArrayList<JSONObject> netTables that correspond at lic.getNetwork_tables()
+               
+*/         
+            netTables= lic.getNetwork_tables();
+            JSONObject job = new JSONObject();
+            JSONObject job_table = new JSONObject();
+           // JSONObject j_map = new JSONObject(params);
+           JSONArray jArr =new JSONArray();
+            Iterator itr = netTables.iterator();
+            while (itr.hasNext()) {
                 
-*/               
+                Object element = itr.next().toString();
+                jArr.add(element);
+                
+                //System.out.print(element + " ");
+            }
+            job.put("network_tables",jArr);
+            //fa_endPoints =lic.getFa_endpoints();
+            //HashMap params = new HashMap();
             
+            
+            job.put("fedId", id);
+            job.put("user", federationUser);
+            /*
+            job_in.put("type",lic.getType());
+            
+            job_in.put("token",lic.getToken());
+            
+            job_in.put("command",lic.getCommand());*/
+            
+            //job_in.put("arrayPoint", fa_endPoints);
+            
+            //job.put("network_tables", job_table);
+            
+            
+           // job.put("infoLink", job_in);
+           
+            //job.put("mongoDb", m.toString());
+            Links ln =new Links("","");
+            Response r;
+            r =ln.makeLink(job,baseBBURL);
             if (!result.equals("ok")) {
                 reply.put("returncode", 1);
                 reply.put("errormesg", "Generic Exception: OPERATION ABORTED");
                 return reply.toJSONString();
             }
-            
+            org.json.simple.parser.JSONParser p = new org.json.simple.parser.JSONParser();
+                Object obj = null;
+                try {
+                    obj = p.parse(r.readEntity(String.class));
+                } catch (ParseException ex) {
+                    LOGGER.error("Exception occurred in Parsing JSON returned from FEDSDN \n" + ex.getMessage());
+                }
             //operation needed to complete link requests!
             ////LA FUNZIONE DELL'ORCHESTRATOR DOVRA': ritrovare la lista di tutte le cloud in federazione per il tenant
             ////Per ogni Cloud:
