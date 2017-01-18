@@ -16,10 +16,12 @@
 package API.EASTAPI.Clients;
 
 
+import static API.EASTAPI.Clients.Links.LOGGER;
 import java.util.Iterator;
 import javax.ws.rs.core.Response;
 import org.json.JSONException;
 import org.json.JSONObject;
+
 import org.json.simple.parser.ParseException;
 import utils.Exception.WSException;
 import utils.Exception.WSException303;
@@ -219,4 +221,58 @@ public class Tenant extends EastBrRESTClient{
     private String constructBody(JSONObject params) throws JSONException{
         return "{\"name\" : \""+params.getString("name")+"\", \"password\" : \""+params.getString("password")+"\", \"type\" : \""+params.getString("type")+"\", \"valid_sites\" : "+(org.json.JSONArray)params.get("valid_sites")+"}";
     }
+
+    public Response getFedToken(JSONObject input, String baseBBURL) throws WSException303, WSException {
+
+        JSONObject body;
+        Response r;
+        body = input;
+        String path = "/token";
+        try {
+            r = this.getFedeToken(baseBBURL+path, this.body.toString(), "get");
+        
+    }
+    catch (Exception ex
+
+    
+        ) {
+            throw new WSException303("SEE_OTHER! The action can't be completed");
+    }
+    //Response r =this.makeSimpleRequest(baseFEDSDNURL+"/fednet/"++"/"+siteId+"/netsegment/"+id, "", "get");
+
+    
+        try{
+                this.checkResponse(r);//as answer we expect a status code 200
+    }
+    catch(WSException wse
+
+    
+        ){
+                LOGGER.error("Exception occurred in createTenantFA method, the web service has answer with bad status!\n" + wse.getMessage());
+        throw wse;
+    }
+    return r ;
+}
+    
+    
+    private Response getFedeToken(String path, String body,String opType) throws WSException {
+        
+        String content;
+        content = body;
+        
+        Response r = this.makeSimpleRequest(path, content, "get");
+        try{
+                this.checkResponse(r);//as answer we expect a status code 200
+            }
+            catch(WSException wse){
+                System.out.println(r.readEntity(String.class));
+                LOGGER.error("Exception occurred in createTenantFA method, the web service has answer with bad status!\n"+wse.getMessage());
+                throw wse;
+            }
+        
+        
+        return r;
+    }
+    
+    
 }

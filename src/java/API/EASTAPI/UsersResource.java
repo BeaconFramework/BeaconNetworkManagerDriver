@@ -16,6 +16,7 @@
 package API.EASTAPI;
 
 
+import API.EASTAPI.Clients.Tenant;
 import java.util.HashMap;
 import java.util.logging.Level;
 import javax.ws.rs.Consumes;
@@ -40,6 +41,8 @@ import MDBInt.FederatedUser;
 import MDBInt.FederationUser;
 import MDBInt.MDBIException;
 import OSFFMIDM.SimpleIDM;
+import javax.ws.rs.core.Response;
+import utils.Exception.WSException;
 
 
 
@@ -50,8 +53,10 @@ import OSFFMIDM.SimpleIDM;
  */
 @Path("/fednet/eastBr/user")
 public class UsersResource {
+    
 
     @Context
+    private String user,password;
     private UriInfo context;
     private SimpleIDM sidm;
     static final Logger LOGGER = Logger.getLogger(UsersResource.class);
@@ -71,7 +76,7 @@ public class UsersResource {
     @Path("/validate_user")
     @Consumes("application/json")
     @Produces("application/json")
-    public String validate_user(String content) throws JSONException{
+    public String validate_user(String content) throws JSONException, WSException{
         //VERIFICARE L'APPROCCIO NELL'INTERAZIONE CON IL FEDSDN
         JSONObject reply=new JSONObject();
         JSONParser parser= new JSONParser();
@@ -110,15 +115,35 @@ public class UsersResource {
             reply.put("tenant_id", "");
             return reply.toString();
         }
-        sidm=new SimpleIDM(); //>>>BEACON: VERIFY THIS POINT
-        String dbName=sidm.retrieve_TenantDB("federationTenant",tenant );
+        
+        //CREARE OGGETTO DA PASSARE AL WEB SERVICE
+        input.put("tenant", tenant);
+        input.put("username", username);
+        input.put("endPoint", cmp_endpoint);
+        input.put("passwordUser", pass);
+        
+        // INVOCARE WEBSERVICE
+        String baseBBURL="/fednet/northBr/site/{sitename}/{tenantname}/users"; /////////* OTTENERE BASE URL BB*/////////////
+
+        Tenant ten = new Tenant(user, password);
+        Response r;
+        r=ten.getFedToken(input,baseBBURL);
+        
+        /*
+       sidm=new SimpleIDM(); //>>>BEACON: VERIFY THIS POINT
+        String dbName=sidm.retrieve_TenantDB("federationTenant",tenant ); STRING STRING
         sidm.setDbName(dbName);  //>>>BEACON: FOR THE MOMENT OUR TESTING DB IS CALLED beacon
-        cloud=sidm.getCloudID(username, tenant, cmp_endpoint);
+        cloud=sidm.getCloudID(username, tenant, cmp_endpoint); STRING STRING STRING
         // add check for cloud endpoint
         FederatedUser fu= sidm.retr_infoes_fromfedsdn(tenant, cloud);
+        
+        
         //OpenstackInfoContainer oic=new OpenstackInfoContainer(cloud,cmp_endpoint,tenant,fu.getUser(),fu.getPassword(),fu.getRegion());
         //costruzione oggetto Openstackinfocontainer, e verifica delle credenziali attraverso il modulo di keystone 
         //fornito da jclouds
+        
+      
+        
         if(!fu.getPassword().equals(pass.toString())){
             LOGGER.debug("User not Valid!");
             reply.put("returncode", 1); 
@@ -130,10 +155,19 @@ public class UsersResource {
         KeystoneTest key=new KeystoneTest(tenant,fu.getUser(),fu.getPassword(),cmp_endpoint);
         HashMap hm=key.getToken(tenant, fu.getUser(), fu.getPassword());
         String token=(String)hm.get("ID");
+        
         //When FEDSDN will take in count token expiration date we will use this token as
         ////output parameter that will be returned to it. For the moment we will return a static 
         //////token taken from MongoDb 
+        
+        
+        
         token=sidm.getFederationToken(tenant, username);
+        
+        
+        BEACON INSERIRE RISPOSTA GETfEDERATIONTOKEN
+       
+        
         if((String)hm.get("ID")==null)
         {
             LOGGER.debug("User not Valid!");
@@ -152,12 +186,14 @@ public class UsersResource {
             reply.put("tenant_id", "");
             return reply.toString();
         }
+        
         String tenant_id=key.getTenantId(tenant);
         reply.put("returncode", 0); 
         reply.put("errormesg", "None");
         reply.put("token",token);
         reply.put("tenant_id", tenant_id);
-        return reply.toString();
+        *///RESTITUIRE DIRETTAMENTE LA RESPONSE DRL WEB SERVICE
+        return r.toString();
     }
     
     /**
