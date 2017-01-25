@@ -11,5 +11,14 @@
             <file>file:/media/dati/NetBeansProjects/BEACONProject/BeaconNetworkForwarder/src/java/JClouds_Adapter/NeutronTest.java</file>
             <file>file:/media/dati/NetBeansProjects/BEACONProject/BeaconNetworkForwarder/src/java/API/EASTAPI/UsersResource.java</file>
         </group>
+        <group>
+            <file>file:/home/dissennato/NetBeansProjects/BeaconNetworkManagerDriver/src/java/API/EASTAPI/Clients/Links.java</file>
+            <file>file:/home/dissennato/NetBeansProjects/BeaconNetworkManagerDriver/src/java/API/EASTAPI/LinksResource.java</file>
+            <file>file:/home/dissennato/NetBeansProjects/BeaconNetworkManagerDriver/src/java/API/EASTAPI/Clients/Tenant.java</file>
+            <file>file:/home/dissennato/NetBeansProjects/BeaconNetworkManagerDriver/src/java/API/EASTAPI/Clients/NetworkSegment.java</file>
+            <file>file:/home/dissennato/NetBeansProjects/BeaconNetworkManagerDriver/src/java/API/EASTAPI/Clients/EastBrRESTClient.java</file>
+            <file>file:/home/dissennato/NetBeansProjects/BeaconNetworkManagerDriver/src/java/API/EASTAPI/NetworksegmentResource.java</file>
+            <file>file:/home/dissennato/NetBeansProjects/BeaconNetworkManagerDriver/src/java/API/EASTAPI/UsersResource.java</file>
+        </group>
     </open-files>
 </project-private>
