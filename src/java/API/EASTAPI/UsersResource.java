@@ -88,7 +88,9 @@ public class UsersResource {
         String cmp_endpoint=null;
         String region="RegionOne";
         try 
-        {
+        {//username borrower,password borrower, endpoint 
+            //1: verifica username e password
+            //2: questo borrower possiede un'accordo con la cloud identificata dall'endpoint
             input=new JSONObject(content);
             //LOGGER.error("INPUT: "+input.toString());
             username=((String)input.get("username")).split("@@")[1];
