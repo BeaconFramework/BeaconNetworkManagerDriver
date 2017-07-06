@@ -36,11 +36,14 @@ import java.util.NoSuchElementException;
 import org.jdom2.Element;
 import utils.*;
 import MDBInt.MDBIException;
+import org.json.JSONException;
 import com.mongodb.AggregationOutput;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import org.apache.log4j.Logger;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 
 /**
@@ -62,7 +65,11 @@ public class DBMongo {
     private MessageDigest messageDigest;
     static final Logger LOGGER = Logger.getLogger(DBMongo.class);
     private String identityDB="ManagementDB"; //DefaultVaue
-    private static String configFile="../webapps/OSFFM/WEB-INF/configuration_bigDataPlugin.xml";
+    
+    //CARMELO: put the relative path....again!!!
+    //private static String configFile="../webapps/OSFFM/WEB-INF/configuration_bigDataPlugin.xml";
+    private static String configFile="BeaconNetworkManagerDriver/web/WEB-INF/configuration_bigDataPlugin.xml";
+    
     private String mdbIp;
 
     public String getMdbIp() {
@@ -419,14 +426,13 @@ public class DBMongo {
     }
     
     /**
-     * This update Federation User with element. 
+     * This update Federation User with element. Used by BNA
      * @param dbName
-     * @param tableName
      * @param faSite, this is the cloud Id
      * @param docJSON 
      * @author gtricomi
      */
-    public void insertTenantTables(String dbName,String tableName,String faSite, String docJSON) {
+    public void insertTenantTables(String dbName,String faSite, String docJSON) {
 
         DB dataBase = this.getDB(dbName);
         DBCollection collezione = this.getCollection(dataBase, "TenantTables");
@@ -435,7 +441,22 @@ public class DBMongo {
         obj.append("insertTimestamp", System.currentTimeMillis());
         collezione.save(obj);
     }
-     //</editor-fold>
+    
+    /**
+     * This update Federation User with element. Used by BNM
+     * @param dbName
+     * @param docJSON 
+     * @author gtricomi
+     */
+    public void insertTenantTables(String dbName, String docJSON) {
+
+        DB dataBase = this.getDB(dbName);
+        DBCollection collezione = this.getCollection(dataBase, "FedSDNTenantTables");
+        BasicDBObject obj = (BasicDBObject) JSON.parse(docJSON);
+        obj.append("insertTimestamp", System.currentTimeMillis());
+        collezione.save(obj);
+    }
+    //</editor-fold>
     
     public String getRunTimeInfo(String dbName, String uuid) {
 
@@ -449,6 +470,49 @@ public class DBMongo {
         obj = collection.findOne(first);
 
         return obj.toString();
+
+    }
+    public String getRunTimeInfo(String dbName, String idcloud,String uuidTemplate,String stackname) {
+
+        BasicDBObject first = new BasicDBObject();
+        first.put("idCloud", idcloud);
+        first.put("uuidTemplate",uuidTemplate);
+        first.put("stackName",stackname);
+
+        DB database = this.getDB(dbName);
+        DBCollection collection = database.getCollection("runTimeInfo");
+        try{
+            DBCursor b= collection.find(first).sort(new BasicDBObject("insertTimestamp",-1)).limit(1);
+            System.out.println("query: "+first);
+            return b.next().toString();
+        }catch(Exception e){
+            LOGGER.error("Conditioned Research for collection: "+collection+", resQuery , sortQuery ");
+            return null;
+        }
+    }
+
+    public ArrayList<String> getRunTimeInfos(String dbName, String idcloud,String uuidTemplate,String stackname) {
+        ArrayList<String> al=new ArrayList<String>();
+        
+        BasicDBObject first = new BasicDBObject();
+        first.put("idCloud", idcloud);
+        first.put("uuidTemplate",uuidTemplate);
+        first.put("stackName",stackname);
+
+        DB database = this.getDB(dbName);
+        DBCollection collection = database.getCollection("runTimeInfo");
+        try{
+            DBCursor b= collection.find(first).sort(new BasicDBObject("insertTimestamp",-1)).limit(1);
+            System.out.println("query: "+first);
+            while(b.hasNext())
+                al.add(b.next().toString());
+            return al;
+        }catch(Exception e){
+            LOGGER.error("Conditioned Research for collection: "+collection+", resQuery , sortQuery ");
+            return null;
+        }
+        
+        
 
     }
 
@@ -984,9 +1048,12 @@ public class DBMongo {
             query.put("idCloud",dcid);
 
             //System.out.println(query);
-            obj = collection.findOne(query);
+            //obj = collection.findOne(query);
+            System.out.println("MONGO QUERY "+query+ " in DB:"+dbName+" for UUID:"+uuid );
+            DBCursor b=collection.find(query).sort(new BasicDBObject("insertTimestamp",-1)).limit(1);
             if(obj!=null)
-                return (String)obj.get("localResourceName");
+                //return (String)obj.get("localResourceName");
+                return b.next().toString();
             else
                 return null;
         }
@@ -1245,7 +1312,7 @@ public String getMapInfo(String dbName, String uuidTemplate) {
 
         query.put("uuidTemplate", uuidTemplate);
         //cursore = collection.find(query).sort(new BasicDBObject("insertTimestamp",-1)).limit(3);  //query utile nel caso in cui il template viene deployato + di una volta
-        cursore = collection.find(query).sort(new BasicDBObject("insertTimestamp",-1));
+        cursore = collection.find(query).sort(new BasicDBObject("insertTimestamp",-1)).limit(1);
         map = new MapInfo();
 
         if (cursore != null) {
@@ -1409,8 +1476,31 @@ public String getMapInfo(String dbName, String uuidTemplate) {
        return tenantName;
     }
     
+    public boolean verifyTenantCredentials(String user, String password){
+        DB database = this.getDB(this.identityDB);
+        DBCollection collection = database.getCollection("Federation_Credential");
+        BasicDBObject researchField = new BasicDBObject("federationTenant", user);
+       
+        DBObject risultato = collection.findOne(researchField);
+        try{
+            if ( ((String)risultato.get("password")).equals(password) ) return true;
+            else return false;
+        }catch(Exception ex){
+            return false;    
+        }
+    }
+    
     public String getTenantToken(String field,String value){
        DB database = this.getDB(this.identityDB);
+       DBCollection collection = database.getCollection("Federation_Credential");
+       BasicDBObject researchField = new BasicDBObject(field, value);
+       DBObject risultato = collection.findOne(researchField);
+       String tenantName=(String)risultato.get("token");
+       return tenantName;
+    }
+    
+    public String getTenantToken(String field,String value, String tenant){
+       DB database = this.getDB(tenant);
        DBCollection collection = database.getCollection("Federation_Credential");
        BasicDBObject researchField = new BasicDBObject(field, value);
        DBObject risultato = collection.findOne(researchField);
@@ -1451,10 +1541,45 @@ public String getMapInfo(String dbName, String uuidTemplate) {
        
        return ((Number) risultato.get("id")).intValue();//((Number) mapObj.get("autostart")).intValue()//(float) ((double) result.get(v))
     }
+
+    public void insertfedsdnSite(String json, String tenant){
+        
+        DB dataBase = this.getDB(tenant);
+        DBCollection collezione = dataBase.getCollection("fedsdnSite");
+        BasicDBObject obj = (BasicDBObject) JSON.parse(json);
+        obj.append("insertTimestamp", System.currentTimeMillis());
+        collezione.save(obj);
+    }
+    
+    public String getfedsdnSite(String name, String tenant){
+       DB database = this.getDB(tenant);
+       DBCollection collection = database.getCollection("fedsdnSite");
+       BasicDBObject researchField = new BasicDBObject("name", name);
+       DBObject risultato = collection.findOne(researchField);
+       return risultato.toString();
+    }
+     public int getfedsdnSiteID(String name, String tenant){
+       DB database = this.getDB(tenant);
+       DBCollection collection = database.getCollection("fedsdnSite");
+       BasicDBObject researchField = new BasicDBObject("name", name);
+       DBObject risultato = collection.findOne(researchField);
+       
+       return ((Number) risultato.get("id")).intValue();//((Number) mapObj.get("autostart")).intValue()//(float) ((double) result.get(v))
+    }
+     
      
     public void insertfedsdnFednet(String json){
         
         DB dataBase = this.getDB(this.identityDB);
+        DBCollection collezione = dataBase.getCollection("fedsdnFednet");
+        BasicDBObject obj = (BasicDBObject) JSON.parse(json);
+        obj.append("insertTimestamp", System.currentTimeMillis());
+        collezione.save(obj);
+    }
+    
+    public void insertfedsdnFednet(String json, String tenant){
+        
+        DB dataBase = this.getDB(tenant);
         DBCollection collezione = dataBase.getCollection("fedsdnFednet");
         BasicDBObject obj = (BasicDBObject) JSON.parse(json);
         obj.append("insertTimestamp", System.currentTimeMillis());
@@ -1476,6 +1601,23 @@ public String getMapInfo(String dbName, String uuidTemplate) {
        
        return ((Number) risultato.get("id")).intValue();//((Number) mapObj.get("autostart")).intValue()//(float) ((double) result.get(v))
     }
+     
+    public String getfedsdnFednet(String fednet_name, String tenant){
+       DB database = this.getDB(tenant);
+       DBCollection collection = database.getCollection("fedsdnFednet");
+       BasicDBObject researchField = new BasicDBObject("federationTenantName", fednet_name);
+       DBObject risultato = collection.findOne(researchField);
+       return risultato.toString();
+    }
+     public int getfedsdnFednetID(String fednet_name, String tenant){
+       DB database = this.getDB(tenant);
+       DBCollection collection = database.getCollection("fedsdnFednet");
+       BasicDBObject researchField = new BasicDBObject("federationTenantName", fednet_name);
+       DBObject risultato = collection.findOne(researchField);
+       
+       return ((Number) risultato.get("id")).intValue();//((Number) mapObj.get("autostart")).intValue()//(float) ((double) result.get(v))
+    }
+     
     //verificare se la parte dei netsegment và qui o và memorizzata nel DB del tenant
     public void insertfedsdnNetSeg(String json){
         
@@ -1495,6 +1637,31 @@ public String getMapInfo(String dbName, String uuidTemplate) {
     }
      public int getfedsdnNetSegID(String vnetName,String CloudID){
        DB database = this.getDB(this.identityDB);
+       DBCollection collection = database.getCollection("fedsdnNetSeg");
+       BasicDBObject researchField = new BasicDBObject("CloudID", CloudID).append("vnetName", vnetName);
+       DBObject risultato = collection.findOne(researchField);
+       
+       return ((Number) risultato.get("id")).intValue();//((Number) mapObj.get("autostart")).intValue()//(float) ((double) result.get(v))
+    }
+     
+    public void insertfedsdnNetSeg(String json, String tenant){
+        
+        DB dataBase = this.getDB(tenant);
+        DBCollection collezione = dataBase.getCollection("fedsdnNetSeg");
+        BasicDBObject obj = (BasicDBObject) JSON.parse(json);
+        obj.append("insertTimestamp", System.currentTimeMillis());
+        collezione.save(obj);
+    }
+    
+    public String getfedsdnNetSeg(String vnetName,String CloudID, String tenant){
+       DB database = this.getDB(tenant);
+       DBCollection collection = database.getCollection("fedsdnNetSeg");
+       BasicDBObject researchField = new BasicDBObject("CloudID", CloudID).append("vnetName", vnetName);
+       DBObject risultato = collection.findOne(researchField);
+       return risultato.toString();
+    }
+     public int getfedsdnNetSegID(String vnetName,String CloudID, String tenant){
+       DB database = this.getDB(tenant);
        DBCollection collection = database.getCollection("fedsdnNetSeg");
        BasicDBObject researchField = new BasicDBObject("CloudID", CloudID).append("vnetName", vnetName);
        DBObject risultato = collection.findOne(researchField);
@@ -1676,4 +1843,48 @@ public String getMapInfo(String dbName, String uuidTemplate) {
 //        this.insert(tenant, "NetTablesInfo", jsonTable);
         return true;
     }
+    
+    
+    public String retrieveONEFlowTemplate(String tenant, String ManifestName, String onetempNAME) throws MDBIException {
+        DBObject query = new com.mongodb.BasicDBObject();
+        query.put("masterKey", ManifestName);
+        JSONObject manifest = null;
+        try {
+            manifest = new JSONObject(this.getObj(tenant, "master", query.toString()));
+        } catch (JSONException ex) {
+            LOGGER.error("Impossible create a JSONObject form the Object retrieved by master collection");
+        } catch (MDBIException ex) {
+            LOGGER.error("Impossible create a JSONObject form the Object retrieved by master collection");
+        }
+        query = new com.mongodb.BasicDBObject();
+        query.put("type", "ONE::Beacon::OneFlowTemplate");
+        query.put("nome", onetempNAME);
+
+        JSONArray ja = (JSONArray) manifest.remove("resources");
+        String[] arquer = new String[ja.length()];
+        for (int i = 0; i < ja.length(); i++) {
+            try {
+                arquer[i] = ja.getString(i);
+            } catch (JSONException ex) {
+                LOGGER.error("Error in Manifest resources identification, impossible analyze Manifest stored on Database");
+                throw new MDBIException("Error in Manifest resources identification, impossible analyze Manifest stored on Database");
+            }
+        }
+
+        try {
+            query.put("uuid", new com.mongodb.BasicDBObject("$in", arquer));
+            DBObject result = this.find(tenant, "resources", query);
+            result = ((DBObject) result.get("properties"));
+            result = ((DBObject) result.get("onetemplate"));
+            return result.toString();
+
+        } catch (Exception ex) {
+            LOGGER.error("Impossible create a JSONObject with the oneFlow Template retrieved from Manifest");
+            throw new MDBIException("Impossible create a JSONObject with the oneFlow Template retrieved from Manifest");
+        }
+       
+    }
+    
+    
 }
+

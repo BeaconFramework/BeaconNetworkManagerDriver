@@ -87,18 +87,34 @@ public class UsersResource {
         String pass=null;
         String cmp_endpoint=null;
         String region="RegionOne";
+        
+        String configFile="/home/carmelo/NetBeansProjects/BeaconNetworkManagerDriver/web/WEB-INF/configuration_bigDataPlugin.xml";
         try 
-        {//username borrower,password borrower, endpoint 
+        {   //username borrower,password borrower, endpoint 
             //1: verifica username e password
             //2: questo borrower possiede un'accordo con la cloud identificata dall'endpoint
+            
             input=new JSONObject(content);
-            //LOGGER.error("INPUT: "+input.toString());
+            /*
+            LOGGER.error("INPUT: "+input.toString());
+            System.out.println("SOUT INPUT: "+input.toString());
+            */
+            
+            username=(String)input.get("username");
+            tenant=(String)input.get("username");
+            pass=(String)input.get("password");
+            cmp_endpoint=(String)input.get("cmp_endpoint");
+            LOGGER.error("INPUT : username and tenant--> "+username+" password--> "+pass+ " endpoint--> "+cmp_endpoint);
+            System.out.println("SOUT INPUT: username and tenant--> "+username+" password--> "+pass+ " endpoint--> "+cmp_endpoint);
+            
+            /*
             username=((String)input.get("username")).split("@@")[1];
             tenant=((String)input.get("username")).split("@@")[0];
             //cloud=((String)input.get("username")).split("@")[2]; //FORSE NON DEVO USARE QST...
             pass=(String)input.get("password"); // NOT USED FOR THE MOMENT
             cmp_endpoint=input.getString("cmp_endpoint");
             //region=(String)input.get("region"); NOT USED FOR THE MOMENT
+            */
         }
         catch(JSONException pe)
         {
@@ -125,14 +141,50 @@ public class UsersResource {
         input.put("passwordUser", pass);
         
         // INVOCARE WEBSERVICE
-        String baseBBURL="/fednet/northBr/site/{sitename}/{tenantname}/users"; /////////* OTTENERE BASE URL BB*/////////////
-
+        //String baseBBURL="/fednet/northBr/site/{sitename}/{tenantname}/users"; /////////* OTTENERE BASE URL BB*/////////////
+        
+        DBMongo m = new DBMongo();
+        m.init(configFile);
+        m.connectLocale("10.9.240.1");
+        boolean result = m.verifyTenantCredentials(username, pass);
+        if(result){
+            String token = m.getTenantToken("federationTenant", tenant);
+            try {
+                String resulting_jsonobj= m.getObj(tenant, "datacenter", "{\"idmEndpoint\": \""+cmp_endpoint+"\"}");
+                if(resulting_jsonobj.equals(null)){
+                    reply.put("returncode", 1); 
+                    reply.put("errormesg", "User not Valid!");
+                    reply.put("token","");
+                    reply.put("tenant_id", "");
+                    return reply.toString();
+                }
+                else{
+                    reply.put("returncode", 0); 
+                    reply.put("errormesg", "None");
+                    reply.put("token",token);
+                    reply.put("tenant_id", tenant);
+                }
+            } catch (MDBIException ex) {
+                reply.put("returncode", 1); 
+                reply.put("errormesg", "site endpoint not found!");
+                reply.put("token",token);
+                reply.put("tenant_id", "");
+                return reply.toString();
+            }
+        }
+        else
+            System.out.println("No result!!!");
+        
+        
+        
+        
+        String baseBBURL="/fednet/northBr/site/MyFirstSite/"+tenant+"/users";
         Tenant ten = new Tenant(user, password);
         Response r;
         r=ten.getFedToken(input,baseBBURL);
         
         /*
-       sidm=new SimpleIDM(); //>>>BEACON: VERIFY THIS POINT
+        sidm=new SimpleIDM(); //>>>BEACON: VERIFY THIS POINT
         String dbName=sidm.retrieve_TenantDB("federationTenant",tenant ); STRING STRING
         sidm.setDbName(dbName);  //>>>BEACON: FOR THE MOMENT OUR TESTING DB IS CALLED beacon
         cloud=sidm.getCloudID(username, tenant, cmp_endpoint); STRING STRING STRING
@@ -194,7 +246,7 @@ public class UsersResource {
         reply.put("errormesg", "None");
         reply.put("token",token);
         reply.put("tenant_id", tenant_id);
-        *///RESTITUIRE DIRETTAMENTE LA RESPONSE DRL WEB SERVICE
+        *///RESTITUIRE DIRETTAMENTE LA RESPONSE DEL WEB SERVICE
         return r.toString();
     }
     
