@@ -1628,17 +1628,17 @@ public String getMapInfo(String dbName, String uuidTemplate) {
         collezione.save(obj);
     }
     
-    public String getfedsdnNetSeg(String vnetName,String CloudID){
+    public String getfedsdnNetSeg(String vlanId,String CloudID){
        DB database = this.getDB(this.identityDB);
        DBCollection collection = database.getCollection("fedsdnNetSeg");
-       BasicDBObject researchField = new BasicDBObject("CloudID", CloudID).append("vnetName", vnetName);
+       BasicDBObject researchField = new BasicDBObject("cloudID", CloudID).append("vlan_id", vlanId);
        DBObject risultato = collection.findOne(researchField);
        return risultato.toString();
     }
-     public int getfedsdnNetSegID(String vnetName,String CloudID){
+     public int getfedsdnNetSegID(String vlanId,String CloudID){
        DB database = this.getDB(this.identityDB);
        DBCollection collection = database.getCollection("fedsdnNetSeg");
-       BasicDBObject researchField = new BasicDBObject("CloudID", CloudID).append("vnetName", vnetName);
+       BasicDBObject researchField = new BasicDBObject("cloudID", CloudID).append("vlan_id", vlanId);
        DBObject risultato = collection.findOne(researchField);
        
        return ((Number) risultato.get("id")).intValue();//((Number) mapObj.get("autostart")).intValue()//(float) ((double) result.get(v))
@@ -1653,17 +1653,18 @@ public String getMapInfo(String dbName, String uuidTemplate) {
         collezione.save(obj);
     }
     
-    public String getfedsdnNetSeg(String vnetName,String CloudID, String tenant){
+    public String getfedsdnNetSeg(String vlanId, String CloudID, String tenant){
        DB database = this.getDB(tenant);
        DBCollection collection = database.getCollection("fedsdnNetSeg");
-       BasicDBObject researchField = new BasicDBObject("CloudID", CloudID).append("vnetName", vnetName);
+       BasicDBObject researchField = new BasicDBObject("cloudID", CloudID).append("vlan_id", vlanId);
        DBObject risultato = collection.findOne(researchField);
+       if(risultato == null) return null;
        return risultato.toString();
     }
-     public int getfedsdnNetSegID(String vnetName,String CloudID, String tenant){
+     public int getfedsdnNetSegID(String vlanId,String CloudID, String tenant){
        DB database = this.getDB(tenant);
        DBCollection collection = database.getCollection("fedsdnNetSeg");
-       BasicDBObject researchField = new BasicDBObject("CloudID", CloudID).append("vnetName", vnetName);
+       BasicDBObject researchField = new BasicDBObject("cloudID", CloudID).append("vlan_id", vlanId);
        DBObject risultato = collection.findOne(researchField);
        
        return ((Number) risultato.get("id")).intValue();//((Number) mapObj.get("autostart")).intValue()//(float) ((double) result.get(v))

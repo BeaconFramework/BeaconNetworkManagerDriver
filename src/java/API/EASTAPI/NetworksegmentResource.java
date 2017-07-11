@@ -44,6 +44,7 @@ import JClouds_Adapter.OpenstackInfoContainer;
 import MDBInt.DBMongo;
 import MDBInt.FederatedUser;
 import MDBInt.FederationUser;
+import MDBInt.MDBIException;
 import OSFFMIDM.SimpleIDM;
 import javax.ws.rs.core.Response;
 import org.json.simple.parser.ParseException;
@@ -68,8 +69,12 @@ public class NetworksegmentResource {
      * Creates a new instance of NetworksegmentResource
      */
     public NetworksegmentResource() {
-        sidm=new SimpleIDM();
-        this.db=new DBMongo();
+        String configFile="/home/carmelo/NetBeansProjects/BeaconNetworkManagerDriver/web/WEB-INF/configuration_bigDataPlugin.xml";
+        
+        sidm=new SimpleIDM(configFile);
+        this.db = new DBMongo();
+        this.db.init(configFile);
+        this.db.connectLocale("10.9.240.1");
     }
 
     /**
@@ -80,7 +85,7 @@ public class NetworksegmentResource {
     @PUT
     @Consumes("application/json")
     @Produces("application/json")
-    public String add_netSegment(String content) throws JSONException{
+    public String add_netSegment(String content) throws JSONException {
         JSONObject reply = new JSONObject();
         JSONParser parser = new JSONParser();
         JSONObject input = null;
@@ -93,6 +98,9 @@ public class NetworksegmentResource {
         String OSF_cloud = null;
         String response = "";
         JSONObject network_info = null;
+        String netseg = null;
+        String datacenter_id = null;
+        String tenantDB = null;
         try {
             /*
              {
@@ -103,16 +111,64 @@ public class NetworksegmentResource {
              */
             //retrieve JSON value from REST request
             input = new JSONObject(content);
+
             OSF_token = (String) input.get("token");
             OSF_network_segment_id = (String) input.get("network_segment_id");
             OSF_cmp_endpoint = (String) input.get("cmp_endpoint");
+        } catch (JSONException e) {
+            reply.append("returncode", 1);
+            reply.append("errormesg", "Impossible to retrieve information from the BNM");
+            reply.append("network_info", "");
+            return reply.toString();
+        }
 
+        try {
             //verrà restituito l'OSFFM endpoint
             //ricavare dal simple IDM gli elementi che mi mancano ovvero:
             //String endpoint, String tenant, String user, String password, String region
-            String tenantDB = this.db.getTenantDBName("token", OSF_token);
-            JSONObject federationcredential = new JSONObject(this.db.getFederationCredential(tenantDB, OSF_token));
-            JSONObject federatedcredential = new JSONObject(this.db.getFederatedCredential(tenantDB, OSF_token, OSF_cmp_endpoint));
+            tenantDB = this.db.getTenantName("token", OSF_token);
+            //JSONObject federationcredential = new JSONObject(this.db.getFederationCredential(tenantDB, OSF_token));
+
+            datacenter_id = this.db.getDatacenterIDfrom_cmpEndpoint(tenantDB, OSF_cmp_endpoint);
+            System.out.println("DC ID: " + datacenter_id);
+        } catch (MDBIException e) {
+            reply.append("returncode", 1);
+            reply.append("errormesg", "Netegment Not present on cloud pointed by cmp_endpoint");
+            reply.append("network_info", "");
+            return reply.toString();
+        }
+
+        try {
+            netseg = this.db.getfedsdnNetSeg(OSF_network_segment_id, datacenter_id, tenantDB);
+            if (netseg == null) {
+                reply.append("returncode", 1);
+                reply.append("errormesg", "Netegment Not present on cloud pointed by cmp_endpoint");
+                reply.append("network_info", "");
+                return reply.toString();
+            } else {
+                network_info = new JSONObject();
+                JSONObject netseg_obj = new JSONObject(netseg);
+
+                reply.append("returncode", 0);
+                reply.append("errormesg", "");
+                network_info.put("internalId", OSF_network_segment_id);
+
+                //11-07-17: Questa informazione non dovrebbe servire...verificare !!!
+                //network_info.put("FedSDN_netSegId", OSF_network_segment_id);
+                network_info.put("network_address", netseg_obj.get("network_address"));
+                network_info.put("network_mask", netseg_obj.get("network_mask"));
+                network_info.put("size", netseg_obj.get("size"));
+                reply.append("network_info", network_info);
+                return reply.toString();
+            }
+        } catch (JSONException e) {
+            reply.append("returncode", 1);
+            reply.append("errormesg", "Error in creating the netsegment information object");
+            reply.append("network_info", "");
+            return reply.toString();
+        }
+
+        /*
             //funzione che verifica l'esistenza del netsegment
             NeutronTest neutron = new NeutronTest(OSF_cmp_endpoint, federationcredential.getString("federationUser"), federatedcredential.getString("federatedUser"), federatedcredential.getString("federatedPassword"), federatedcredential.getString("Region"));
             Network netSearched = neutron.getNetworkFromId(OSF_network_segment_id);
@@ -144,13 +200,12 @@ public class NetworksegmentResource {
                 //sidm.setDbName("beacon");
 
                 //FederationUser fu = sidm.getFederationU(OSF_token, OSF_cmp_endpoint);//OSF_cmp_endpoint questo non è usato
-/* //>>>BEACON: CREARE SERVIZIO SUL BEACON BROKER PER INVOCARE QUESTA FUNZIONALITÀ
+         */
+ /* //>>>BEACON: CREARE SERVIZIO SUL BEACON BROKER PER INVOCARE QUESTA FUNZIONALITÀ
                 OrchestrationManager om = new OrchestrationManager();
-                response = om.networkSegmentAdd(dbName, fu, OSF_network_segment_id, OSF_cloud, params).toString();
-                
-                
-                
-*/              
+                response = om.networkSegmentAdd(dbName, fu, OSF_network_segment_id, OSF_cloud, params).toString();          
+         */
+ /*
                 JSONObject job = new JSONObject(); 
                 JSONObject job_in = new JSONObject(); 
                 JSONObject j_map =new JSONObject(params);
@@ -162,8 +217,8 @@ public class NetworksegmentResource {
                 
                 job.put("CloudName",OSF_cloud);
                 job.put("hashMapParam",j_map);
-                String baseBBURL=""; /////////* OTTENERE BASE URL BB*/////////////
-                /* devo chiamare il put??*/
+                String baseBBURL=""; ///////// OTTENERE BASE URL BB/////////////
+                // devo chiamare il put??
                 
                 NetworkSegment ns = new NetworkSegment(user, password);
                 Response r;
@@ -189,12 +244,15 @@ public class NetworksegmentResource {
                 return reply.toString();
             }
         } catch (JSONException pe) {
+            System.out.println(pe.getMessage());
             reply.append("returncode", 1);
             reply.append("errormesg", "JSON_INPUT_UNPARSABLE: OPERATION ABORTED! " + pe.getMessage());
             reply.append("network_info", "");
             LOGGER.error(pe.getMessage());
             return reply.toString();
         } catch (Exception e) {
+            System.out.println(e.getMessage());
+            e.printStackTrace();
             reply.append("returncode", 1);
             reply.append("errormesg", "Generic Exception occurred! Contact Administrator.");
             reply.append("network_info", "");
@@ -209,12 +267,8 @@ public class NetworksegmentResource {
         ////////UPDATE:28/07 il cmp_endpoint sul fedsdn è quello delle cloud
        
         //return reply.toJSONString();
+         */
     }
-            
-            
-            
-            
-            
-            
-    }
+}
+
 
