@@ -33,15 +33,21 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import MDBInt.DBMongo;
+import MDBInt.MDBIException;
+import com.mongodb.DB;
+import com.mongodb.DBCollection;
+import com.mongodb.DBObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.logging.Level;
 import javax.ws.rs.core.Response;
 
 /**
  * REST Web Service
  *
- * @author gtricomi
+ * @author gtricomi, apanarello
+ * 
  */
 @Path("/fednet/eastBr/FA_Management")
 public class LinksResource {
@@ -170,5 +176,85 @@ public class LinksResource {
     @Path("{name}")
     public Link getLink(@PathParam("name") String name) {
         return Link.getInstance(name);
+    }
+    
+    
+    
+    
+    /**
+     * @author apanarello 
+     * MongoDB retrieve info
+     */
+    
+    public void createNetSegTab(String token,ArrayList<String> site) {
+        String federation_nets="";
+        String tenant="";
+        String fedNet=null;
+        String version="";
+        DBMongo db= new DBMongo();
+        JSONObject fedNetsObj=null;
+        JSONArray fedNetsArray=null;
+        JSONParser fedNetsObjParser =new JSONParser();
+        ArrayList<String> netsegs = new ArrayList();
+        JSONObject netTables = new JSONObject();
+        JSONParser jparser = new JSONParser();
+                JSONArray netSegs=null;
+
+        db.init("/home/apanarello/BeaconProject/newBBP/BB/web/WEB-INF/configuration_bigDataPlugin.xml");
+
+        db.connectLocale("10.9.240.1");
+        // TODO code application logic here
+        tenant = db.getTenantDBName("token", token);
+        for (String refSite : site) {
+            
+            
+            try {
+                federation_nets=db.retrieveFedNet(tenant, refSite);
+                try {
+                    fedNetsObj=(JSONObject) fedNetsObjParser.parse(federation_nets);
+                    fedNetsArray= (JSONArray) fedNetsObj.get("fednets");
+                    version =(String) fedNetsObj.get("version");
+                    Iterator <String> it = fedNetsArray.iterator();
+                    //Iterator<DBObject> it = cursor.iterator();
+        //ArrayList<String> net = new ArrayList();
+                    while (it.hasNext()) {
+                        fedNet = it.next();
+                        netsegs=db.retrieveBNANetSegFromFednet(tenant, refSite, version, fedNet );
+                        Iterator <String> ite = netsegs.iterator();
+                        while (it.hasNext()) {
+                            
+                           netSegs.add(ite.next());
+                        /*MODIFHCE PARZIALI DA COMMENTAREEEEE - - - - - - - - - - - -- - - - - - - - - - - - -*/
+                        }
+                    }
+                    netTables.put("version",version );
+                    netTables.put("table", netSegs);
+                    
+                } catch (ParseException ex) {
+                   LOGGER.error("Impossible parse from string to JSON object");
+                }
+            } catch (MDBIException ex) {
+                LOGGER.error("Impossible to retrieve fedNet arreys from fednetsinSite collection");
+            }
+            
+            
+            
+            
+        }
+        /*
+        
+        DBCollection collezione = db.getCollection(tenant, "provaa");
+        System.out.println("DOPO COLLEZIONE"+collezione.toString());
+        if(collezione==null){
+            DBObject options;
+            collezione=dataBase.createCollection("provaa",null);
+           
+    
+    }
+        else{
+                
+    }
+       */ 
+        
     }
 }

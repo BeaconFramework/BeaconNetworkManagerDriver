@@ -67,7 +67,7 @@ Response r;
     private Response makeLinks(org.json.simple.JSONObject j, String baseFEDSDNURL, String fednetnorthBrnetwork, String Path) throws WSException{
         
         body=j;
-        Response r=this.makeSimpleRequest(baseFEDSDNURL+fednetnorthBrnetwork+Path, body.toString(), "post");
+        Response r=this.makeSimpleRequest(baseFEDSDNURL+fednetnorthBrnetwork+Path, body.toString(), "put");
         
         try{
                 this.checkResponse(r);//as answer we expect a status code 200
