@@ -1865,39 +1865,35 @@ public String getMapInfo(String dbName, String uuidTemplate) {
     
     
     
-    public String retrieveFedNet(String tenant,String refSite) throws MDBIException{
-        
-        ArrayList<JSONObject > netNames= new ArrayList<JSONObject>();
+    public String retrieveFedNet(String tenant, String refSite) throws MDBIException {
+
+        ArrayList<JSONObject> netNames = new ArrayList<JSONObject>();
         BasicDBObject allQuery = new BasicDBObject();
         BasicDBObject fields = new BasicDBObject();
         fields.put("fedNet", 1);
-        String result="";
+        
 //        this.insert(tenant, "NetTablesInfo", jsonTable);
-        try{   
-        DB database = this.getDB(tenant);
-        DBCollection collection = database.getCollection("fednetsinSite");
-                //BasicDBObject resQuery=new BasicDBObject("fedNet",refSite);
-        BasicDBObject resQuery=new BasicDBObject("referenceSite",refSite);
-        BasicDBObject sortQuery=new BasicDBObject("version",-1);
-        return result=conditionedResearch(collection,resQuery,sortQuery,fields);
+        try {
+            DB database = this.getDB(tenant);
+            DBCollection collection = database.getCollection("fednetsinSite");
+            //BasicDBObject resQuery=new BasicDBObject("fedNet",refSite);
+            BasicDBObject resQuery = new BasicDBObject("referenceSite", refSite);
+            BasicDBObject sortQuery = new BasicDBObject("version", -1);
+            return conditionedResearch(collection, resQuery, sortQuery, fields);
+        } catch (Exception e) {
+
+            throw new MDBIException();
+
         }
-        catch(Exception e){
-        
-        throw new MDBIException();
-        
-        }
-        
-        
+
         //DBCursor cursor =collection.find(allQuery,fields);
         //Iterator<DBObject> it = cursor.iterator();
         //ArrayList<String> net = new ArrayList();
         //while (it.hasNext()) {
-       //     net.add(it.next().toString()); //array list di
-       // }
-        
-       // return this.conditionedResearch(collection,resQuery,sortQuery,fields); //da modificare ritorna un solo valore per il singolo refsite
+        //     net.add(it.next().toString()); //array list di
+        // }
+        // return this.conditionedResearch(collection,resQuery,sortQuery,fields); //da modificare ritorna un solo valore per il singolo refsite
         //return result;
-
     }
     
     /**
