@@ -440,6 +440,30 @@ public class DBMongo {
     }
     
     /**
+     * 
+     * @param dbName
+     * @param fednet
+     * @return 
+     * @author caromeo
+     */
+    public String getTenantTablesFromFedTenant(String dbName, String fedten, String site){
+        
+        DB database = this.getDB(dbName);
+        DBCollection collection = database.getCollection("TenantTables");
+                
+        BasicDBObject resQuery = new BasicDBObject();
+        List<BasicDBObject> obj = new ArrayList<BasicDBObject>();
+        obj.add(new BasicDBObject("entryTenantTab.name",fedten));
+        obj.add(new BasicDBObject("referenceSite", site));
+        resQuery.put("$and", obj);
+        
+        BasicDBObject sortQuery = new BasicDBObject("version",-1);
+        
+        return this.conditionedResearch(collection,resQuery,sortQuery);
+        
+    }
+    
+    /**
      * This update Federation User with element. Used by BNA
      * @param dbName
      * @param faSite, this is the cloud Id
