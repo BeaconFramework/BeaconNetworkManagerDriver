@@ -1929,54 +1929,53 @@ public String getMapInfo(String dbName, String uuidTemplate) {
      * @return
      * @throws MDBIException
      */
-    public ArrayList<String> retrieveBNANetSegFromFednet(String tenant,String refSite ,String version, String fedNet) throws MDBIException{
-        
+    public ArrayList<String> retrieveBNANetSegFromFednet(String tenant, String refSite, Double version, String fedNet) throws MDBIException {
+
         //ArrayList<JSONObject > netNames= new ArrayList<JSONObject>();
         BasicDBObject allQuery = new BasicDBObject();
         BasicDBObject fields = new BasicDBObject();
         BasicDBObject field = new BasicDBObject();
-           ArrayList<String> netEntries= new ArrayList<>();
+        ArrayList<String> netEntries = new ArrayList<>();
         fields.put("UUID", 1);
         field.put("netEntry", 1);
-        String result="";
+        String result = "";
 //        this.insert(tenant, "NetTablesInfo", jsonTable);
-        try{   
-        DB database = this.getDB(tenant);
-        DBCollection collection = database.getCollection("BNATableData");
-                //BasicDBObject resQuery=new BasicDBObject("fedNet",refSite);
-                
-                
-               
-        BasicDBObject resQuery=new BasicDBObject("referenceSite",refSite).append("version", version).append("fedNet",fedNet);
-        DBCursor uuid= collection.find(resQuery);
-        collection=database.getCollection("BNANetSeg");
-        
-        resQuery=new BasicDBObject("UUID",uuid.next().toString());
-        DBCursor fedNetArray= collection.find(resQuery,field);
-            while (fedNetArray.hasNext()) {
-                BasicDBObject tempObj = (BasicDBObject) fedNetArray.next();
-                tempObj.removeField("_id");
-                netEntries.add(tempObj.toString());
-                
+        try {
+            DB database = this.getDB(tenant);
+            DBCollection collection = database.getCollection("BNATableData");
+            //BasicDBObject resQuery=new BasicDBObject("fedNet",refSite);
+
+            Object o = null;
+            BasicDBObject resQuery = new BasicDBObject("referenceSite", refSite).append("version", version).append("fedNet", fedNet);
+            DBCursor uuid = collection.find(resQuery);
+            System.out.println("");
+            if (!uuid.hasNext()) {
+                return null;
+            } else {
+                o = uuid.next();
+
+                collection = database.getCollection("BNANetSeg");
+
+                resQuery = new BasicDBObject("UUID", o.toString());
+                System.out.println(uuid.next().toString());
+                DBCursor fedNetArray = collection.find(resQuery, field);
+                if (fedNetArray == null) {
+                    System.out.println("fedNetArray - - -  NULL");;
+                }
+
+                while (fedNetArray.hasNext()) {
+                    BasicDBObject tempObj = (BasicDBObject) fedNetArray.next();
+                    tempObj.removeField("_id");
+                    netEntries.add(tempObj.toString());
+
+                }
+                return netEntries;
             }
-        return netEntries;
+        } catch (Exception e) {
+
+            throw new MDBIException();
+
         }
-        catch(Exception e){
-        
-        throw new MDBIException();
-        
-        }
-        
-        
-        //DBCursor cursor =collection.find(allQuery,fields);
-        //Iterator<DBObject> it = cursor.iterator();
-        //ArrayList<String> net = new ArrayList();
-        //while (it.hasNext()) {
-       //     net.add(it.next().toString()); //array list di
-       // }
-        
-       // return this.conditionedResearch(collection,resQuery,sortQuery,fields); //da modificare ritorna un solo valore per il singolo refsite
-        //return result;
 
     }
     

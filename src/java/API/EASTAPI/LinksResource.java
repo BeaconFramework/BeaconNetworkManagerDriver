@@ -220,7 +220,7 @@ public class LinksResource {
         String federation_nets = "";
         String tenant = "";
         String fedNet = null;
-        String version = "";
+        Double version = null;
         DBMongo db = new DBMongo();
         JSONObject fedNetsObj = null;
         JSONArray fedNetsArray = null;
@@ -238,30 +238,35 @@ public class LinksResource {
         // TODO code application logic here
         tenant = db.getTenantDBName("token", token);
         for (String refSite : site) { // per ogni sito nella lista dei siti
-
+            System.out.println("bbb"+refSite);
             try {
                 federation_nets = db.retrieveFedNet(tenant, refSite); // lista delle fednet
+                if (federation_nets == null) {
+                    LOGGER.error("the selected SITE " + "-" + refSite + "-" + " is not present in the DB " + tenant + " I'm going to go ahead with the next site");
+                    continue;
+                }
                 try {
                     fedNetsObj = (JSONObject) fedNetsObjParser.parse(federation_nets);
                     fedNetsArray = (JSONArray) fedNetsObj.get("fednets"); //array fednet ((PR, PU , QU)
-                    version = (String) fedNetsObj.get("version"); //Current version
+                    version = (Double) fedNetsObj.get("version"); //Current version
                     Iterator<String> it = fedNetsArray.iterator();
                     //Iterator<DBObject> it = cursor.iterator();
                     //ArrayList<String> net = new ArrayList();
                     while (it.hasNext()) { //per ogni fednet nell'array
                         fedNet = it.next();
                         netsegs = db.retrieveBNANetSegFromFednet(tenant, refSite, version, fedNet); //ottiene lista netsegment relativi a sito fednet e version
+                        if (netsegs == null) {
+                            continue; // DA VERIFICARE CORRETTEZZA LOGICA
+                        }
                         Iterator<String> ite = netsegs.iterator();
                         while (ite.hasNext()) { //per ogni net segment
 
                             netSegs.add(ite.next()); //crea una JSON ARRAY DI NETSEGMENTs PER IL LA FEDNET "it"
-                            /*MODIFHCE PARZIALI DA COMMENTAREEEEE - - - - - - - - - - - -- - - - - - - - - - - - -*/
+                            //MODIFHCE PARZIALI DA COMMENTAREEEEE - - - - - - - - - - - -- - - - - - - - - - - - -
                         }
 
-                        netTable.add(netSegs); //crea un array di netSegment arrays per 
+                        //crea un array di netSegment arrays per 
                     }
-                    netTables.put("version", version);
-                    netTables.put("table", netTable);
 
                 } catch (ParseException ex) {
                     LOGGER.error("Impossible parse from string to JSON object");
@@ -269,8 +274,16 @@ public class LinksResource {
             } catch (MDBIException ex) {
                 LOGGER.error("Impossible to retrieve fedNet arreys from fednetsinSite collection");
             }
-            
+            if ((netsegs == null) && netSegs==null) {
+                continue;
+                //System.out.println("aaaa");
+            }
+            netTable.add(netSegs);
+            netTables.put("version", version);
+            netTables.put("table", netTable);
             site_seg.put(refSite, netTables);
+            
+            //*/
         }
     }
 }
