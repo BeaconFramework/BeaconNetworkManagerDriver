@@ -1879,7 +1879,9 @@ public String getMapInfo(String dbName, String uuidTemplate) {
             //BasicDBObject resQuery=new BasicDBObject("fedNet",refSite);
             BasicDBObject resQuery = new BasicDBObject("referenceSite", refSite);
             BasicDBObject sortQuery = new BasicDBObject("version", -1);
-            return conditionedResearch(collection, resQuery, sortQuery, fields);
+            //return conditionedResearch(collection, resQuery, sortQuery, fields);
+            return conditionedResearch(collection, resQuery, sortQuery);
+
         } catch (Exception e) {
 
             throw new MDBIException();
