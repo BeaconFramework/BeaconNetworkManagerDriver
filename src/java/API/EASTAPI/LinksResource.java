@@ -177,38 +177,105 @@ public class LinksResource {
     public Link getLink(@PathParam("name") String name) {
         return Link.getInstance(name);
     }
+
+    /**
+     * @param site
+     * @author caromeo 
+     * Builds the temporary table for the BNAs with the last updated information
+     */
+    
+    public void createFednetsInSiteTab(String site){
+        DBMongo m = new DBMongo();
+        m.init("/home/carmelo/BeaconProject/newBBP/BB/web/WEB-INF/configuration_bigDataPlugin.xml");
+        m.connectLocale("10.9.240.1");
+
+        String result = m.getFednetsInSiteTablesFromFedTenant("review", site, "fednets", null);
+        System.out.println("RES: "+result);
+    }    
+    
+    /**
+     * @param site
+     * @param version
+     * @author caromeo 
+     * Builds the temporary table for the BNAs with a selected version of the information
+     */
+    
+    public void createFednetsInSiteTabVersion(String site, Integer version){
+        DBMongo m = new DBMongo();
+        m.init("/home/carmelo/BeaconProject/newBBP/BB/web/WEB-INF/configuration_bigDataPlugin.xml");
+        m.connectLocale("10.9.240.1");
+
+        String result = m.getFednetsInSiteTablesFromFedTenant("review", site, "fednets", version);
+        System.out.println("RES: "+result);
+    }
     
     
     /**
      * @param token
      * @param site
      * @author caromeo 
-     * Builds the tenant table for the BNAs
+     * Builds the tenant table for the BNAs with the last updated information
      */
     
     public void createTenantTab(String token, String site){
         DBMongo m = new DBMongo();
         m.init("/home/carmelo/BeaconProject/newBBP/BB/web/WEB-INF/configuration_bigDataPlugin.xml");
         m.connectLocale("10.9.240.1");
-        
-        JSONObject tenantTables = new JSONObject();
-        
-        
-        //use ManagementDB
-        //db.Federation_Credential.find()
-        //OUT: {"federationTenant" : "review", "token" : "3efb8c19-92a9-43bc-75d2-e4ff6f53cd2a", "password" : "reviewPass" }
+
         String tenant_name = m.getTenantName("token", token);
-        
-        
-        //use review
-        //db.TenantTables.find()
-        //OUT:
-        //"referenceSite" : "CETIC", "version" : 114, "entryTenantTab" : { "tenant_id" : "3029a98f60c24ac1b4ef4636c4ee3006", "name" : "review" } }
-        //"referenceSite" : "UME", "version" : 114, "entryTenantTab" : { "tenant_id" : "3029a98f60c24ac1b4ef4636c4ee3006", "name" : "review" } }
-        String result = m.getTenantTablesFromFedTenant("review", tenant_name, site);
+        String result = m.getTenantTablesFromFedTenant("review", tenant_name, site, "entryTenantTab", null);
         System.out.println("RES: "+result);
     }
     
+        /**
+     * @param token
+     * @param site
+     * @param version
+     * @author caromeo 
+     * Builds the tenant table for the BNAs with a selected version of the information
+     */
+    
+    public void createTenantTabVersion(String token, String site, Integer version){
+        DBMongo m = new DBMongo();
+        m.init("/home/carmelo/BeaconProject/newBBP/BB/web/WEB-INF/configuration_bigDataPlugin.xml");
+        m.connectLocale("10.9.240.1");
+
+        String tenant_name = m.getTenantName("token", token);
+        String result = m.getTenantTablesFromFedTenant("review", tenant_name, site, "entryTenantTab", version);
+        System.out.println("RES: "+result);
+    }
+    
+    
+    /**
+     * @param site
+     * @author caromeo 
+     * Builds the site table for the BNAs with the last updated information
+     */
+    
+    public void createSiteTab(String site){
+        DBMongo m = new DBMongo();
+        m.init("/home/carmelo/BeaconProject/newBBP/BB/web/WEB-INF/configuration_bigDataPlugin.xml");
+        m.connectLocale("10.9.240.1");
+
+        String result = m.getSiteTablesFromFedTenant("review", site, "entrySiteTab", null);
+        System.out.println("RES: "+result);
+    }    
+    
+    /**
+     * @param site
+     * @param version
+     * @author caromeo 
+     * Builds the site table for the BNAs with a selected version of the information
+     */
+    
+    public void createSiteTabVersion(String site, Integer version){
+        DBMongo m = new DBMongo();
+        m.init("/home/carmelo/BeaconProject/newBBP/BB/web/WEB-INF/configuration_bigDataPlugin.xml");
+        m.connectLocale("10.9.240.1");
+
+        String result = m.getSiteTablesFromFedTenant("review", site, "entrySiteTab", version);
+        System.out.println("RES: "+result);
+    } 
     
     
     /**

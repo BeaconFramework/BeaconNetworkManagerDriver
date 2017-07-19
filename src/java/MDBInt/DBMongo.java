@@ -185,13 +185,14 @@ public class DBMongo {
         }
     }
     
-    // ALFONSO DA CONTINUAREEEEE
-     private String conditionedResearch(DBCollection collection,BasicDBObject resQuery,BasicDBObject sortQuery,BasicDBObject field) {
+    private String conditionedResearch(DBCollection collection, BasicDBObject resQuery ,BasicDBObject sortQuery, BasicDBObject field) {
         try{
-            //DBCursor b= collection.find(resQuery,field).sort(sortQuery).limit(1); //RITORNA IL FIELD SELEZIONATO
-            DBCursor b= collection.find(resQuery).sort(sortQuery).limit(1);
+            JSONObject jsonized_field = new JSONObject(JSON.serialize(field));
+            Iterator<?> keys = jsonized_field.keys();
+            DBCursor b= collection.find(resQuery, field).sort(sortQuery).limit(1); //RITORNA IL FIELD SELEZIONATO
 
-            return b.next().toString();
+            return b.next().get((String)keys.next()).toString();
+
         }catch(Exception e){
             LOGGER.error("Conditioned Research for collection: "+collection+", resQuery "+resQuery+", sortQuery "+sortQuery);
             return null;
@@ -348,6 +349,73 @@ public class DBMongo {
         return this.conditionedResearch(collection,resQuery,sortQuery);
 
     }
+
+
+    /**
+     * 
+     * @param dbName
+     * @param fedten
+     * @param site
+     * @param field
+     * @param version
+     * @return 
+     * @author caromeo
+     */
+    public String getFednetsInSiteTablesFromFedTenant(String dbName, String site, String field, Integer version){
+        
+        DB database = this.getDB(dbName);
+        DBCollection collection = database.getCollection("fednetsinSite");
+
+        BasicDBObject resQuery = new BasicDBObject();
+        
+        if(version != null){
+                
+            List<BasicDBObject> obj = new ArrayList<BasicDBObject>();
+            obj.add(new BasicDBObject("referenceSite", site));
+            obj.add(new BasicDBObject("version", version));
+        
+            resQuery.put("$and", obj);
+        }
+        else
+            resQuery = new BasicDBObject("referenceSite", site);
+        
+        BasicDBObject sortQuery = new BasicDBObject("version",-1);        
+        BasicDBObject fieldObj = new BasicDBObject(field, 1);
+        
+        return this.conditionedResearch(collection,resQuery, sortQuery, fieldObj);
+    }
+
+
+    /**
+     * 
+     * @param dbName
+     * @param site
+     * @param field
+     * @param version
+     * @return 
+     * @author caromeo
+     */
+    public String getSiteTablesFromFedTenant(String dbName, String site, String field, Integer version){
+        
+        DB database = this.getDB(dbName);
+        DBCollection collection = database.getCollection("siteTables");
+
+        BasicDBObject resQuery = new BasicDBObject();
+        List<BasicDBObject> obj = new ArrayList<BasicDBObject>();
+        obj.add(new BasicDBObject("entrySiteTab.name",site));
+        obj.add(new BasicDBObject("referenceSite", site));
+        
+        if(version != null)
+            obj.add(new BasicDBObject("version", version));
+        
+        resQuery.put("$and", obj);
+
+        BasicDBObject sortQuery = new BasicDBObject("version",-1);        
+        BasicDBObject fieldObj = new BasicDBObject(field, 1);
+        
+        return this.conditionedResearch(collection,resQuery, sortQuery, fieldObj);
+    }
+
     
     /**
      * 
@@ -438,29 +506,36 @@ public class DBMongo {
         return this.conditionedResearch(collection,resQuery,sortQuery);
 
     }
-    
+
     /**
      * 
      * @param dbName
-     * @param fednet
+     * @param fedten
+     * @param site
+     * @param field
+     * @param version
      * @return 
      * @author caromeo
      */
-    public String getTenantTablesFromFedTenant(String dbName, String fedten, String site){
+    public String getTenantTablesFromFedTenant(String dbName, String fedten, String site, String field, Integer version){
         
         DB database = this.getDB(dbName);
         DBCollection collection = database.getCollection("TenantTables");
-                
+
         BasicDBObject resQuery = new BasicDBObject();
         List<BasicDBObject> obj = new ArrayList<BasicDBObject>();
         obj.add(new BasicDBObject("entryTenantTab.name",fedten));
         obj.add(new BasicDBObject("referenceSite", site));
+        
+        if(version != null)
+            obj.add(new BasicDBObject("version", version));
+        
         resQuery.put("$and", obj);
+
+        BasicDBObject sortQuery = new BasicDBObject("version",-1);        
+        BasicDBObject fieldObj = new BasicDBObject(field, 1);
         
-        BasicDBObject sortQuery = new BasicDBObject("version",-1);
-        
-        return this.conditionedResearch(collection,resQuery,sortQuery);
-        
+        return this.conditionedResearch(collection,resQuery, sortQuery, fieldObj);
     }
     
     /**

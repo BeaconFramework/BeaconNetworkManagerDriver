@@ -41,8 +41,36 @@ public class testClass {
         m.init("/home/carmelo/NetBeansProjects/BeaconNetworkManagerDriver/web/WEB-INF/configuration_bigDataPlugin.xml");
         m.connectLocale("10.9.240.1");
         
-        String result = m.getTenantTablesFromFedTenant("review", "review", "UME");
+        //TENANT TABLE
+        /*
+        String result = m.getTenantTablesFromFedTenant("review", "review", "UME", "entryTenantTab", null);
         System.out.println("RES: "+result);
+        
+        result = m.getTenantTablesFromFedTenant("review", "review", "UME", "entryTenantTab", 114);
+        System.out.println("RES: "+result);
+        */
+        
+        
+        //SITE TABLE
+        /*
+        //m.insertSiteTables("review", "UME", "{ \"referenceSite\" : \"UME\", \"version\": 115, \"entrySiteTab\" : { \"tenant_id\" : \"3029a98f60c24ac1b4ef4636c4ee3006\", \"name\" : \"UME\", \"fa_url\" : \"10.9.1.159:4567\", \"site_proxy\" : [ { \"port\" : 4789, \"ip\" : \"192.168.87.250\" } ] }}");
+
+        String result = m.getSiteTablesFromFedTenant("review", "UME", "entrySiteTab", null);
+        System.out.println("RES: "+result);
+        
+        result = m.getSiteTablesFromFedTenant("review", "UME", "entrySiteTab", 115);
+        System.out.println("RES: "+result);
+        */
+        
+        
+        //HELP TABLE
+        /*
+        String result = m.getFednetsInSiteTablesFromFedTenant("review", "CETIC", "fednets", null);
+        System.out.println("RES: "+result);
+        
+        result = m.getFednetsInSiteTablesFromFedTenant("review", "CETIC", "fednets", 1);
+        System.out.println("RES: "+result);
+        */
     }
     
 }
