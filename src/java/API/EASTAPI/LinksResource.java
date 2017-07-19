@@ -179,6 +179,36 @@ public class LinksResource {
     }
     
     
+    /**
+     * @param token
+     * @param site
+     * @author caromeo 
+     * Builds the tenant table for the BNAs
+     */
+    
+    public void createTenantTab(String token, String site){
+        DBMongo m = new DBMongo();
+        m.init("/home/carmelo/BeaconProject/newBBP/BB/web/WEB-INF/configuration_bigDataPlugin.xml");
+        m.connectLocale("10.9.240.1");
+        
+        JSONObject tenantTables = new JSONObject();
+        
+        
+        //use ManagementDB
+        //db.Federation_Credential.find()
+        //OUT: {"federationTenant" : "review", "token" : "3efb8c19-92a9-43bc-75d2-e4ff6f53cd2a", "password" : "reviewPass" }
+        String tenant_name = m.getTenantName("token", token);
+        
+        
+        //use review
+        //db.TenantTables.find()
+        //OUT:
+        //"referenceSite" : "CETIC", "version" : 114, "entryTenantTab" : { "tenant_id" : "3029a98f60c24ac1b4ef4636c4ee3006", "name" : "review" } }
+        //"referenceSite" : "UME", "version" : 114, "entryTenantTab" : { "tenant_id" : "3029a98f60c24ac1b4ef4636c4ee3006", "name" : "review" } }
+        String result = m.getTenantTablesFromFedTenant("review", tenant_name, site);
+        System.out.println("RES: "+result);
+    }
+    
     
     
     /**
