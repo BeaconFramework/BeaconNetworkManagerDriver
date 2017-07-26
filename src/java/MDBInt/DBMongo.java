@@ -1929,12 +1929,13 @@ public String getMapInfo(String dbName, String uuidTemplate) {
      * @return
      * @throws MDBIException
      */
-    public ArrayList<String> retrieveBNANetSegFromFednet(String tenant, String refSite, Double version, String fedNet) throws MDBIException {
+    public ArrayList<String> retrieveBNANetSegFromFednet(String tenant, String refSite, Integer version, String fedNet) throws MDBIException {
 
         //ArrayList<JSONObject > netNames= new ArrayList<JSONObject>();
         BasicDBObject allQuery = new BasicDBObject();
         BasicDBObject fields = new BasicDBObject();
         BasicDBObject field = new BasicDBObject();
+
         ArrayList<String> netEntries = new ArrayList<>();
         fields.put("UUID", 1);
         field.put("netEntry", 1);
@@ -1955,20 +1956,24 @@ public String getMapInfo(String dbName, String uuidTemplate) {
                 o = uuid.next();
 
                 collection = database.getCollection("BNANetSeg");
+                BasicDBObject bdo = (BasicDBObject) o;
 
-                resQuery = new BasicDBObject("UUID", o.toString());
-                System.out.println(uuid.next().toString());
+                resQuery = new BasicDBObject("FK", (String) bdo.get("FK"));
+                System.out.println(resQuery);
                 DBCursor fedNetArray = collection.find(resQuery, field);
                 if (fedNetArray == null) {
                     System.out.println("fedNetArray - - -  NULL");;
-                }
+                } else {
+                    while (fedNetArray.hasNext()) {
 
-                while (fedNetArray.hasNext()) {
-                    BasicDBObject tempObj = (BasicDBObject) fedNetArray.next();
-                    tempObj.removeField("_id");
-                    netEntries.add(tempObj.toString());
+                        BasicDBObject tempObj = (BasicDBObject) fedNetArray.next();
+                        tempObj.removeField("_id");
+                        
+                        netEntries.add((tempObj.get("netEntry")).toString());
 
+                    }
                 }
+                System.out.println("NET ENTRIES: " +netEntries.toString());
                 return netEntries;
             }
         } catch (Exception e) {
