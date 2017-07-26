@@ -220,7 +220,7 @@ public class LinksResource {
         String federation_nets = "";
         String tenant = "";
         String fedNet = null;
-        Double version = null;
+        Integer version = null;
         DBMongo db = new DBMongo();
         JSONObject fedNetsObj = null;
         JSONArray fedNetsArray = null;
@@ -228,7 +228,7 @@ public class LinksResource {
         ArrayList<String> netsegs = new ArrayList();
         JSONObject netTables = new JSONObject();
         JSONParser jparser = new JSONParser();
-        JSONArray netSegs = null;
+        JSONArray netSegs = new JSONArray();
         JSONArray netTable = new JSONArray();
         HashMap site_seg = new HashMap();
 
@@ -237,7 +237,10 @@ public class LinksResource {
         db.connectLocale("10.9.240.1");
         // TODO code application logic here
         tenant = db.getTenantDBName("token", token);
-        for (String refSite : site) { // per ogni sito nella lista dei siti
+        for (String refSite : site) {
+            netTable.clear();
+            netTables.clear();
+            netSegs.clear();// per ogni sito nella lista dei siti
             System.out.println("bbb"+refSite);
             try {
                 federation_nets = db.retrieveFedNet(tenant, refSite); // lista delle fednet
@@ -248,23 +251,31 @@ public class LinksResource {
                 try {
                     fedNetsObj = (JSONObject) fedNetsObjParser.parse(federation_nets);
                     fedNetsArray = (JSONArray) fedNetsObj.get("fednets"); //array fednet ((PR, PU , QU)
-                    version = (Double) fedNetsObj.get("version"); //Current version
+                    version = ((Double) fedNetsObj.get("version")).intValue(); //Current version
                     Iterator<String> it = fedNetsArray.iterator();
                     //Iterator<DBObject> it = cursor.iterator();
                     //ArrayList<String> net = new ArrayList();
                     while (it.hasNext()) { //per ogni fednet nell'array
+                        netSegs.clear();
                         fedNet = it.next();
                         netsegs = db.retrieveBNANetSegFromFednet(tenant, refSite, version, fedNet); //ottiene lista netsegment relativi a sito fednet e version
+                        //System.out.println("NETSEGS " +netsegs.toString());
                         if (netsegs == null) {
                             continue; // DA VERIFICARE CORRETTEZZA LOGICA
                         }
                         Iterator<String> ite = netsegs.iterator();
                         while (ite.hasNext()) { //per ogni net segment
-
-                            netSegs.add(ite.next()); //crea una JSON ARRAY DI NETSEGMENTs PER IL LA FEDNET "it"
-                            //MODIFHCE PARZIALI DA COMMENTAREEEEE - - - - - - - - - - - -- - - - - - - - - - - - -
+                            String next=ite.next();
+                            //System.out.println("ite :-" +next);
+                            
+                            netSegs.add(next); //crea una JSON ARRAY DI NETSEGMENTs PER IL LA FEDNET "it"
+                            
+//MODIFHCE PARZIALI DA COMMENTAREEEEE - - - - - - - - - - - -- - - - - - - - - - - - -
                         }
-
+                           netTable.add(netSegs.clone());
+                           //System.out.println("netTable " +netTable.toString());
+                           netTables.put("table", netTable.clone());
+                           
                         //crea un array di netSegment arrays per 
                     }
 
@@ -274,15 +285,21 @@ public class LinksResource {
             } catch (MDBIException ex) {
                 LOGGER.error("Impossible to retrieve fedNet arreys from fednetsinSite collection");
             }
-            if ((netsegs == null) && netSegs==null) {
+            //if ((netsegs == null) && netSegs.isEmpty())
+            if (netSegs.isEmpty())
+            {
                 continue;
                 //System.out.println("aaaa");
             }
-            netTable.add(netSegs);
-            netTables.put("version", version);
-            netTables.put("table", netTable);
-            site_seg.put(refSite, netTables);
             
+            //netTable.add(netSegs);
+            netTables.put("version", version);
+            //netTables.put("table", netTable);
+            site_seg.put(refSite, netTables.clone());
+            System.out.println("contenuto hashMap per sito "+refSite+" "+site_seg.get(refSite).toString());
+            //System.out.println(netTables.toString());
+            
+
             //*/
         }
     }
