@@ -182,6 +182,8 @@ public class LinksResource {
                     }
                     else{
                         System.out.println("Sito "+site_+"non presente in HashMaps");
+                        LOGGER.error("Sito "+site_+"non presente in HashMaps");
+
                     //sito non presnete nell'hashTable restituita
                     
                     }
