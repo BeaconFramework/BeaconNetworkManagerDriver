@@ -40,6 +40,8 @@ import com.mongodb.DBObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.logging.Level;
 import javax.ws.rs.core.Response;
 
@@ -74,7 +76,11 @@ public class LinksResource {
         JSONParser parser= new JSONParser();
         JSONObject input=null;
         LinkInfoContainers lic=new LinkInfoContainers();
-        String baseBBURL=""; /////* Ricavare url BB*//////////    
+        String baseBBURL=""; /////* Ricavare url BB*//////////   
+        JSONObject inputSiteList=null;
+        String token="";
+        HashMap MapSegTables = new HashMap();
+          ArrayList <String> arraySites = null;
         try 
         {
             input=(JSONObject) parser.parse(content);
@@ -118,7 +124,6 @@ public class LinksResource {
             //fa_endPoints =lic.getFa_endpoints();
             //HashMap params = new HashMap();
             
-            
             job.put("fedId", id);
             job.put("user", federationUser);
             /*
@@ -152,7 +157,44 @@ public class LinksResource {
                     LOGGER.error("Exception occurred in Parsing JSON returned from FEDSDN \n" + ex.getMessage());
                 }
             //operation needed to complete link requests!
+            ////////////////////////////////////////////////////////////ALFO
             ////LA FUNZIONE DELL'ORCHESTRATOR DOVRA': ritrovare la lista di tutte le cloud in federazione per il tenant
+            
+            JSONArray sites=null;
+            sites = (JSONArray) inputSiteList.get("site"); // bisogna valutare e verificare come sono strutturate le cloud nel json
+            //suppongo nel JSON OBJECT CI SIA UN ARRAY DI SITI
+            Iterator<String> it = sites.iterator();
+            while (it.hasNext()) {
+                arraySites.add(it.next()); //Creo l'array list per inviarla al metodo di creazione tabelle che restitiesce hashMapTable per ogni sito
+            }
+            MapSegTables= this.createNetSegTab(token, arraySites); //net segement tables
+            //per ogni sito invoco il web service e invio le tabelle
+            
+            Set setEntry = MapSegTables.keySet();
+            Iterator setIte=setEntry.iterator(); //siti nella hashtable
+             for (String site_ : arraySites) {  //siti nella lista di input
+
+                while (setIte.hasNext()) {
+                    String extrectedSite = setIte.next().toString();
+                    if (extrectedSite.equals(site_)) { //controllo se il sito nella lista è presente nella hashtable ottenuta , se si estra la tabella per quel sito
+                        JSONObject tab = (JSONObject) MapSegTables.get(extrectedSite); //tabella segment estratta dal sito
+                        //inviare tabella a "tab" al sito corrispondente invocando webservice
+                    }
+                    else{
+                        System.out.println("Sito "+site_+"non presente in HashMaps");
+                    //sito non presnete nell'hashTable restituita
+                    
+                    }
+
+                }
+
+                //send 
+    
+            }
+            
+            
+            ///////////////////////////////////////////////////////////ALFO
+            
             ////Per ogni Cloud:
             //////>>richiamare funzione che richiede network table da neutron
             //////[questo perchè il flow prevede che sia inviata la network table al FEDSDN attraverso una chiamata PUT /fednet/ID_FEDNET con action=link
@@ -283,7 +325,7 @@ public class LinksResource {
      * MongoDB retrieve info
      */
     
-    public void createNetSegTab(String token, ArrayList<String> site) {
+    public HashMap createNetSegTab(String token, ArrayList<String> site) {
         String federation_nets = "";
         String tenant = "";
         String fedNet = null;
@@ -369,5 +411,6 @@ public class LinksResource {
 
             //*/
         }
+        return site_seg;
     }
 }
