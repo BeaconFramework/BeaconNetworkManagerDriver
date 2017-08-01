@@ -323,8 +323,10 @@ public class LinksResource {
     
     
     /**
+     * param token
+     * param Arraylist site
      * @author apanarello 
-     * MongoDB retrieve info
+     * LinksResource create netsegment tble
      */
     
     public HashMap createNetSegTab(String token, ArrayList<String> site) {

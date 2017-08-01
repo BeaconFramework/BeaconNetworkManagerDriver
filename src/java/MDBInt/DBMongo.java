@@ -2003,6 +2003,7 @@ public String getMapInfo(String dbName, String uuidTemplate) {
      * @param refSite
      * @return
      * @throws MDBIException
+     * @author Alfonso Panarello
      */
     public ArrayList<String> retrieveBNANetSegFromFednet(String tenant, String refSite, Integer version, String fedNet) throws MDBIException {
 
