@@ -350,6 +350,35 @@ public class DBMongo {
 
     }
 
+    /**
+     * 
+     * @param dbName
+     * @param faSite, this is the cloud Id
+     * @param version
+     * @return
+     * @author caromeo
+     */
+    public String getSiteTables(String dbName, String faSite, Integer version) {
+
+        Object o = null;
+        DB database = this.getDB(dbName);
+        DBCollection collection = database.getCollection("siteTables");
+        
+        BasicDBObject resQuery=new BasicDBObject("referenceSite",faSite).append("version", version);
+
+        DBCursor uuid = collection.find(resQuery);
+        System.out.println("");
+        
+        if (!uuid.hasNext()) {
+            return null;
+        } else {
+            o = uuid.next();
+            BasicDBObject bdo = (BasicDBObject) o;
+            System.out.println(bdo.get("entrySiteTab"));
+            return bdo.get("entrySiteTab").toString();
+        }
+    }
+    
 
     /**
      * 
@@ -505,6 +534,33 @@ public class DBMongo {
         BasicDBObject sortQuery=new BasicDBObject("version",-1);
         return this.conditionedResearch(collection,resQuery,sortQuery);
 
+    }
+    
+    /**
+     * 
+     * @param dbName
+     * @param faSite, this is the cloud Id
+     * @param version
+     * @return 
+     * @author caromeo
+     */
+    public String getTenantTables(String dbName, String faSite, Integer version) {
+
+        Object o = null;
+        DB database = this.getDB(dbName);
+        DBCollection collection = database.getCollection("TenantTables");
+        
+        BasicDBObject resQuery=new BasicDBObject("referenceSite",faSite).append("version", version);
+
+        DBCursor uuid = collection.find(resQuery);
+        System.out.println("");
+        if (!uuid.hasNext()) {
+            return null;
+        } else {
+            o = uuid.next();
+            BasicDBObject bdo = (BasicDBObject) o;
+            return bdo.get("entryTenantTab").toString();
+        }
     }
 
     /**

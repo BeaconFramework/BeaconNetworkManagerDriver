@@ -79,8 +79,12 @@ public class LinksResource {
         String baseBBURL=""; /////* Ricavare url BB*//////////   
         JSONObject inputSiteList=null;
         String token="";
+
+        HashMap SiteTables = new HashMap();
+        HashMap TenantTables = new HashMap();
         HashMap MapSegTables = new HashMap();
-          ArrayList <String> arraySites = null;
+        
+        ArrayList <String> arraySites = null;
         try 
         {
             input=(JSONObject) parser.parse(content);
@@ -168,12 +172,27 @@ public class LinksResource {
                 arraySites.add(it.next()); //Creo l'array list per inviarla al metodo di creazione tabelle che restitiesce hashMapTable per ogni sito
             }
             MapSegTables= this.createNetSegTab(token, arraySites); //net segement tables
-            //per ogni sito invoco il web service e invio le tabelle
             
+            //CARMELO 28/07/17
+            //this.createSiteTab //creare il metodo per recuperare le info a partire da lista di siti (arraySites) e token. deve restituire un hashtable
+            //iterare per i siti (vedi sotto) per inserire nella tab (come JSONObject)
+            SiteTables = this.createSiteTab(token, arraySites); //site tables
+            TenantTables = this.createTenantTab(token, arraySites); //site tables
+            
+            
+            //per ogni sito invoco il web service e invio le tabelle
             Set setEntry = MapSegTables.keySet();
             Iterator setIte=setEntry.iterator(); //siti nella hashtable
+
+            Set setEntrySite = SiteTables.keySet();
+            Iterator setIte2=setEntrySite.iterator(); //siti nella hashtable
+            
+            Set setEntryTenant = TenantTables.keySet();
+            Iterator setIte3=setEntryTenant.iterator(); //siti nella hashtable 
+            
              for (String site_ : arraySites) {  //siti nella lista di input
 
+                //FEDNET
                 while (setIte.hasNext()) {
                     String extrectedSite = setIte.next().toString();
                     if (extrectedSite.equals(site_)) { //controllo se il sito nella lista è presente nella hashtable ottenuta , se si estra la tabella per quel sito
@@ -185,11 +204,38 @@ public class LinksResource {
                         LOGGER.error("Sito "+site_+"non presente in HashMaps");
 
                     //sito non presnete nell'hashTable restituita
-                    
                     }
-
                 }
 
+                //SITI
+                while (setIte2.hasNext()) {
+                    String extrectedSite = setIte2.next().toString();
+                    if (extrectedSite.equals(site_)) { //controllo se il sito nella lista è presente nella hashtable ottenuta , se si estra la tabella per quel sito
+                        JSONObject tab2 = (JSONObject) SiteTables.get(extrectedSite); //tabella segment estratta dal sito
+                        //inviare tabella a "tab" al sito corrispondente invocando webservice
+                    }
+                    else{
+                        System.out.println("Sito "+site_+"non presente in HashMaps");
+                        LOGGER.error("Sito "+site_+"non presente in HashMaps");
+
+                    //sito non presnete nell'hashTable restituita
+                    }
+                }
+                
+                //TENANT
+                while (setIte3.hasNext()) {
+                    String extrectedSite = setIte3.next().toString();
+                    if (extrectedSite.equals(site_)) { //controllo se il sito nella lista è presente nella hashtable ottenuta , se si estra la tabella per quel sito
+                        JSONObject tab3 = (JSONObject) TenantTables.get(extrectedSite); //tabella segment estratta dal sito
+                        //inviare tabella a "tab" al sito corrispondente invocando webservice
+                    }
+                    else{
+                        System.out.println("Sito "+site_+"non presente in HashMaps");
+                        LOGGER.error("Sito "+site_+"non presente in HashMaps");
+
+                    //sito non presnete nell'hashTable restituita
+                    }
+                }
                 //send 
     
             }
@@ -416,5 +462,143 @@ public class LinksResource {
             //*/
         }
         return site_seg;
+    }
+    
+    
+    /**
+     * @param token
+     * @param site
+     * @author caromeo
+     * Create SiteTab
+     */
+    
+    public HashMap createSiteTab(String token, ArrayList<String> site) {
+        String federation_nets = "";
+        String tenant = "";
+        String site_table = "";
+
+        Integer version = null;
+        
+        JSONObject fedNetsObj = new JSONObject();
+        JSONParser fedNetsObjParser = new JSONParser();
+        JSONParser sitesObjParser = new JSONParser();
+        JSONObject sitesObj = new JSONObject();
+        JSONArray site_array = new JSONArray();
+        
+        
+        DBMongo db = new DBMongo();
+        HashMap site_hm = new HashMap();
+        
+        db.init("/home/carmelo/NetBeansProjects/BB/web/WEB-INF/configuration_bigDataPlugin.xml");
+        db.connectLocale("10.9.240.1");
+        tenant = db.getTenantDBName("token", token);
+
+        for (String refSite : site) {
+            System.out.println("REFSITE: "+refSite);
+            sitesObj.clear();
+            
+            try {
+                federation_nets = db.retrieveFedNet(tenant, refSite); // lista delle fednet
+                if (federation_nets == null) {
+                    LOGGER.error("the selected SITE " + "-" + refSite + "-" + " is not present in the DB " + tenant + " I'm going to go ahead with the next site");
+                    continue;
+                }
+                
+                try {
+                    fedNetsObj = (JSONObject) fedNetsObjParser.parse(federation_nets);
+                } catch (ParseException ex) {
+                    LOGGER.error("Error while parsing Fednets "+ ex.getMessage());
+                }
+                version = ((Double) fedNetsObj.get("version")).intValue(); //Current version
+
+            
+                site_table = db.getSiteTables(tenant, refSite, version);
+                if (site_table == null) {
+                    LOGGER.error("the selected SITE " + "-" + refSite + "-" + " is not present in the collection siteTables.");
+                    continue;
+                }
+                try {
+                    sitesObj = (JSONObject) sitesObjParser.parse(site_table);
+                    site_array.add(sitesObj.clone());
+
+                } catch (ParseException ex) {
+                    LOGGER.error("Error while parsing Sites "+ ex.getMessage());
+                }
+            } catch (MDBIException ex) {
+                LOGGER.error("Error while contacting Database "+ ex.getMessage());
+            }
+        }
+        for (String refSite : site) {
+            site_hm.put(refSite, site_array.clone());
+            System.out.println("contenuto hashMap per sito "+refSite+" "+site_hm.get(refSite).toString());
+        }
+        System.out.println("SITE: "+ site_hm.toString());
+        return site_hm;
+    }
+    
+    
+    /**
+     * @param token
+     * @param site
+     * @author caromeo
+     * Create TenantTab
+     */
+    
+    public HashMap createTenantTab(String token, ArrayList<String> site) {
+        String federation_nets = "";
+        String tenant = "";
+        String tenant_table = "";
+        
+        Integer version = null;
+        
+        JSONObject fedNetsObj = new JSONObject();
+        JSONParser fedNetsObjParser = new JSONParser();
+        JSONParser tenantsObjParser = new JSONParser();
+        JSONObject tenantsObj = new JSONObject();
+        
+        DBMongo db = new DBMongo();
+        HashMap tenant_hm = new HashMap();
+        
+        db.init("/home/carmelo/NetBeansProjects/BB/web/WEB-INF/configuration_bigDataPlugin.xml");
+        db.connectLocale("10.9.240.1");
+        tenant = db.getTenantDBName("token", token);
+
+        for (String refSite : site) {
+            tenantsObj.clear();
+            
+            try {
+                federation_nets = db.retrieveFedNet(tenant, refSite); // lista delle fednet
+                if (federation_nets == null) {
+                    LOGGER.error("the selected SITE " + "-" + refSite + "-" + " is not present in the DB " + tenant + " I'm going to go ahead with the next site");
+                    continue;
+                }
+                
+                try {
+                    fedNetsObj = (JSONObject) fedNetsObjParser.parse(federation_nets);
+                } catch (ParseException ex) {
+                    LOGGER.error("Error while parsing Fednets "+ ex.getMessage());
+                }
+                version = ((Double) fedNetsObj.get("version")).intValue(); //Current version
+
+                tenant_table = db.getTenantTables(tenant, refSite, version);
+                if (tenant_table == null) {
+                    LOGGER.error("the selected SITE " + "-" + refSite + "-" + " is not present in the collection siteTables.");
+                    continue;
+                }
+                try {
+                    tenantsObj = (JSONObject) tenantsObjParser.parse(tenant_table);
+
+                    tenant_hm.put(refSite, tenantsObj.clone());
+                    System.out.println("contenuto hashMap per sito "+refSite+" "+tenant_hm.get(refSite).toString());
+
+                } catch (ParseException ex) {
+                    LOGGER.error("Error while parsing Tenants "+ ex.getMessage());
+                }
+            } catch (MDBIException ex) {
+                LOGGER.error("Error while contacting Database "+ ex.getMessage());
+            }
+        }
+        System.out.println("TENANT: "+ tenant_hm.toString());
+        return tenant_hm;
     }
 }
