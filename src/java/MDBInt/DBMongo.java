@@ -65,7 +65,11 @@ public class DBMongo {
     private MessageDigest messageDigest;
     static final Logger LOGGER = Logger.getLogger(DBMongo.class);
     private String identityDB="ManagementDB"; //DefaultVaue
-    private static String configFile="../webapps/OSFFM/WEB-INF/configuration_bigDataPlugin.xml";
+    
+    //CARMELO: put the relative path....again!!!
+    //private static String configFile="../webapps/OSFFM/WEB-INF/configuration_bigDataPlugin.xml";
+    private static String configFile="BeaconNetworkManagerDriver/web/WEB-INF/configuration_bigDataPlugin.xml";
+    
     private String mdbIp;
 
     public String getMdbIp() {
@@ -464,7 +468,7 @@ public class DBMongo {
     public void insertTenantTables(String dbName, String docJSON) {
 
         DB dataBase = this.getDB(dbName);
-        DBCollection collezione = this.getCollection(dataBase, "FedSDNTenantTables");
+        DBCollection collezione = this.getCollection(dataBase, "fedsdnTenant");
         BasicDBObject obj = (BasicDBObject) JSON.parse(docJSON);
         obj.append("insertTimestamp", System.currentTimeMillis());
         collezione.save(obj);
@@ -479,7 +483,7 @@ public class DBMongo {
     public String getTenantTables(String dbName) {
 
         DB database = this.getDB(dbName);
-        DBCollection collection = database.getCollection("FedSDNTenantTables");
+        DBCollection collection = database.getCollection("fedsdnTenant");
         
  //04/07/2017 gt: eliminare la sort query, questa collezione dovrebbe avere un solo elemento(nel caso in cui si gestisca solo il tenant di federazione, diversamente se si
  //gestiscono anche gli user allora si deve aggiungere una variabile tra i parametri della funzione da usare come filtro per la resQuery da usare nella conditionedResearch commentata.
@@ -487,6 +491,33 @@ public class DBMongo {
         try{
             DBCursor b= collection.find().sort(sortQuery).limit(1);
             return b.next().toString();
+        }catch(Exception e){
+            LOGGER.error("Conditioned Research for collection: "+collection+", sortQuery "+sortQuery);
+            return null;
+        }
+        //return this.conditionedResearch(collection,resQuery,sortQuery);
+    }
+    /**
+     * Used by BNM
+     * @param dbName
+     * @param faSite, this is the cloud Id
+     * @return 
+     * @author gtricomi
+     */
+    public String getfedsdnTenantid(String dbName,String tenName) {
+
+        DB database = this.getDB(dbName);
+        DBCollection collection = database.getCollection("fedsdnTenant");
+        
+ //04/07/2017 gt: eliminare la sort query, questa collezione dovrebbe avere un solo elemento(nel caso in cui si gestisca solo il tenant di federazione, diversamente se si
+ //gestiscono anche gli user allora si deve aggiungere una variabile tra i parametri della funzione da usare come filtro per la resQuery da usare nella conditionedResearch commentata.
+        BasicDBObject sortQuery=new BasicDBObject("version",-1);
+        try{
+            BasicDBObject qid=new BasicDBObject("tenantEntry.name",tenName);
+            DBCursor b= collection.find(qid).sort(sortQuery).limit(1);
+            DBObject ttt=b.next();
+            Integer i=new Integer(((Double)ttt.get("tenantID")).intValue());
+            return i.toString();
         }catch(Exception e){
             LOGGER.error("Conditioned Research for collection: "+collection+", sortQuery "+sortQuery);
             return null;
@@ -1514,6 +1545,20 @@ public String getMapInfo(String dbName, String uuidTemplate) {
        return tenantName;
     }
     
+    public boolean verifyTenantCredentials(String user, String password){
+        DB database = this.getDB(this.identityDB);
+        DBCollection collection = database.getCollection("Federation_Credential");
+        BasicDBObject researchField = new BasicDBObject("federationTenant", user);
+       
+        DBObject risultato = collection.findOne(researchField);
+        try{
+            if ( ((String)risultato.get("password")).equals(password) ) return true;
+            else return false;
+        }catch(Exception ex){
+            return false;    
+        }
+    }
+    
     public String getTenantToken(String field,String value){
        DB database = this.getDB(this.identityDB);
        DBCollection collection = database.getCollection("Federation_Credential");
@@ -1657,17 +1702,17 @@ public String getMapInfo(String dbName, String uuidTemplate) {
         collezione.save(obj);
     }
     
-    public String getfedsdnNetSeg(String vnetName,String CloudID){
+    public String getfedsdnNetSeg(String vlanId,String CloudID){
        DB database = this.getDB(this.identityDB);
        DBCollection collection = database.getCollection("fedsdnNetSeg");
-       BasicDBObject researchField = new BasicDBObject("CloudID", CloudID).append("vnetName", vnetName);
+       BasicDBObject researchField = new BasicDBObject("cloudID", CloudID).append("vlan_id", vlanId);
        DBObject risultato = collection.findOne(researchField);
        return risultato.toString();
     }
-     public int getfedsdnNetSegID(String vnetName,String CloudID){
+     public int getfedsdnNetSegID(String vlanId,String CloudID){
        DB database = this.getDB(this.identityDB);
        DBCollection collection = database.getCollection("fedsdnNetSeg");
-       BasicDBObject researchField = new BasicDBObject("CloudID", CloudID).append("vnetName", vnetName);
+       BasicDBObject researchField = new BasicDBObject("CloudID", CloudID).append("vnetName", vlanId);
        DBObject risultato = collection.findOne(researchField);
        
        return ((Number) risultato.get("id")).intValue();//((Number) mapObj.get("autostart")).intValue()//(float) ((double) result.get(v))
@@ -1682,17 +1727,17 @@ public String getMapInfo(String dbName, String uuidTemplate) {
         collezione.save(obj);
     }
     
-    public String getfedsdnNetSeg(String vnetName,String CloudID, String tenant){
+    public String getfedsdnNetSeg(String vlanId,String CloudID, String tenant){
        DB database = this.getDB(tenant);
        DBCollection collection = database.getCollection("fedsdnNetSeg");
-       BasicDBObject researchField = new BasicDBObject("CloudID", CloudID).append("vnetName", vnetName);
+       BasicDBObject researchField = new BasicDBObject("CloudID", CloudID).append("vlanId", vlanId);
        DBObject risultato = collection.findOne(researchField);
        return risultato.toString();
     }
-     public int getfedsdnNetSegID(String vnetName,String CloudID, String tenant){
+     public int getfedsdnNetSegID(String vlanId,String CloudID, String tenant){
        DB database = this.getDB(tenant);
        DBCollection collection = database.getCollection("fedsdnNetSeg");
-       BasicDBObject researchField = new BasicDBObject("CloudID", CloudID).append("vnetName", vnetName);
+       BasicDBObject researchField = new BasicDBObject("cloudID", CloudID).append("vlan_id", vlanId);
        DBObject risultato = collection.findOne(researchField);
        
        return ((Number) risultato.get("id")).intValue();//((Number) mapObj.get("autostart")).intValue()//(float) ((double) result.get(v))
@@ -1913,4 +1958,3 @@ public String getMapInfo(String dbName, String uuidTemplate) {
     
     
 }
-
