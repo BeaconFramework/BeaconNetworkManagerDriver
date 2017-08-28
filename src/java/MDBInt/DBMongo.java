@@ -184,6 +184,21 @@ public class DBMongo {
             return null;
         }
     }
+    
+    private String conditionedResearch(DBCollection collection, BasicDBObject resQuery ,BasicDBObject sortQuery, BasicDBObject field) {
+        try{
+            JSONObject jsonized_field = new JSONObject(JSON.serialize(field));
+            Iterator<?> keys = jsonized_field.keys();
+            DBCursor b= collection.find(resQuery, field).sort(sortQuery).limit(1); //RITORNA IL FIELD SELEZIONATO
+
+            return b.next().get((String)keys.next()).toString();
+
+        }catch(Exception e){
+            LOGGER.error("Conditioned Research for collection: "+collection+", resQuery "+resQuery+", sortQuery "+sortQuery);
+            return null;
+        }
+    }
+    
     //<editor-fold defaultstate="collapsed" desc="FAInfo Management Functions">
     /**
      * 
@@ -351,6 +366,102 @@ public class DBMongo {
         return this.conditionedResearch(collection,resQuery,sortQuery);
 
     }
+
+    /**
+     * 
+     * @param dbName
+     * @param faSite, this is the cloud Id
+     * @param version
+     * @return
+     * @author caromeo
+     */
+    public String getSiteTables(String dbName, String faSite, Integer version) {
+
+        Object o = null;
+        DB database = this.getDB(dbName);
+        DBCollection collection = database.getCollection("siteTables");
+        
+        BasicDBObject resQuery=new BasicDBObject("referenceSite",faSite).append("version", version);
+
+        DBCursor uuid = collection.find(resQuery);
+        System.out.println("");
+        
+        if (!uuid.hasNext()) {
+            return null;
+        } else {
+            o = uuid.next();
+            BasicDBObject bdo = (BasicDBObject) o;
+            System.out.println(bdo.get("entrySiteTab"));
+            return bdo.get("entrySiteTab").toString();
+        }
+    }
+    
+
+    /**
+     * 
+     * @param dbName
+     * @param fedten
+     * @param site
+     * @param field
+     * @param version
+     * @return 
+     * @author caromeo
+     */
+    public String getFednetsInSiteTablesFromFedTenant(String dbName, String site, String field, Integer version){
+        
+        DB database = this.getDB(dbName);
+        DBCollection collection = database.getCollection("fednetsinSite");
+
+        BasicDBObject resQuery = new BasicDBObject();
+        
+        if(version != null){
+                
+            List<BasicDBObject> obj = new ArrayList<BasicDBObject>();
+            obj.add(new BasicDBObject("referenceSite", site));
+            obj.add(new BasicDBObject("version", version));
+        
+            resQuery.put("$and", obj);
+        }
+        else
+            resQuery = new BasicDBObject("referenceSite", site);
+        
+        BasicDBObject sortQuery = new BasicDBObject("version",-1);        
+        BasicDBObject fieldObj = new BasicDBObject(field, 1);
+        
+        return this.conditionedResearch(collection,resQuery, sortQuery, fieldObj);
+    }
+
+
+    /**
+     * 
+     * @param dbName
+     * @param site
+     * @param field
+     * @param version
+     * @return 
+     * @author caromeo
+     */
+    public String getSiteTablesFromFedTenant(String dbName, String site, String field, Integer version){
+        
+        DB database = this.getDB(dbName);
+        DBCollection collection = database.getCollection("siteTables");
+
+        BasicDBObject resQuery = new BasicDBObject();
+        List<BasicDBObject> obj = new ArrayList<BasicDBObject>();
+        obj.add(new BasicDBObject("entrySiteTab.name",site));
+        obj.add(new BasicDBObject("referenceSite", site));
+        
+        if(version != null)
+            obj.add(new BasicDBObject("version", version));
+        
+        resQuery.put("$and", obj);
+
+        BasicDBObject sortQuery = new BasicDBObject("version",-1);        
+        BasicDBObject fieldObj = new BasicDBObject(field, 1);
+        
+        return this.conditionedResearch(collection,resQuery, sortQuery, fieldObj);
+    }
+
     
     /**
      * 
@@ -443,6 +554,64 @@ public class DBMongo {
     }
     
     /**
+     * 
+     * @param dbName
+     * @param faSite, this is the cloud Id
+     * @param version
+     * @return 
+     * @author caromeo
+     */
+    public String getTenantTables(String dbName, String faSite, Integer version) {
+
+        Object o = null;
+        DB database = this.getDB(dbName);
+        DBCollection collection = database.getCollection("TenantTables");
+        
+        BasicDBObject resQuery=new BasicDBObject("referenceSite",faSite).append("version", version);
+
+        DBCursor uuid = collection.find(resQuery);
+        System.out.println("");
+        if (!uuid.hasNext()) {
+            return null;
+        } else {
+            o = uuid.next();
+            BasicDBObject bdo = (BasicDBObject) o;
+            return bdo.get("entryTenantTab").toString();
+        }
+    }
+
+    /**
+     * 
+     * @param dbName
+     * @param fedten
+     * @param site
+     * @param field
+     * @param version
+     * @return 
+     * @author caromeo
+     */
+    public String getTenantTablesFromFedTenant(String dbName, String fedten, String site, String field, Integer version){
+        
+        DB database = this.getDB(dbName);
+        DBCollection collection = database.getCollection("TenantTables");
+
+        BasicDBObject resQuery = new BasicDBObject();
+        List<BasicDBObject> obj = new ArrayList<BasicDBObject>();
+        obj.add(new BasicDBObject("entryTenantTab.name",fedten));
+        obj.add(new BasicDBObject("referenceSite", site));
+        
+        if(version != null)
+            obj.add(new BasicDBObject("version", version));
+        
+        resQuery.put("$and", obj);
+
+        BasicDBObject sortQuery = new BasicDBObject("version",-1);        
+        BasicDBObject fieldObj = new BasicDBObject(field, 1);
+        
+        return this.conditionedResearch(collection,resQuery, sortQuery, fieldObj);
+    }
+    
+    /**
      * This update Federation User with element. Used by BNA
      * @param dbName
      * @param faSite, this is the cloud Id
@@ -468,7 +637,9 @@ public class DBMongo {
     public void insertTenantTables(String dbName, String docJSON) {
 
         DB dataBase = this.getDB(dbName);
+
         DBCollection collezione = this.getCollection(dataBase, "fedsdnTenant");
+
         BasicDBObject obj = (BasicDBObject) JSON.parse(docJSON);
         obj.append("insertTimestamp", System.currentTimeMillis());
         collezione.save(obj);
@@ -1607,6 +1778,8 @@ public String getMapInfo(String dbName, String uuidTemplate) {
        DBObject risultato = collection.findOne(researchField);
        return risultato.toString();
     }
+    
+    
      public int getfedsdnSiteID(String name){
        DB database = this.getDB(this.identityDB);
        DBCollection collection = database.getCollection("fedsdnSite");
@@ -1693,7 +1866,7 @@ public String getMapInfo(String dbName, String uuidTemplate) {
     }
      
     //verificare se la parte dei netsegment và qui o và memorizzata nel DB del tenant
-    public void insertfedsdnNetSeg(String json){
+    /*public void insertfedsdnNetSeg(String json){
         
         DB dataBase = this.getDB(this.identityDB);
         DBCollection collezione = dataBase.getCollection("fedsdnNetSeg");
@@ -1712,11 +1885,12 @@ public String getMapInfo(String dbName, String uuidTemplate) {
      public int getfedsdnNetSegID(String vlanId,String CloudID){
        DB database = this.getDB(this.identityDB);
        DBCollection collection = database.getCollection("fedsdnNetSeg");
-       BasicDBObject researchField = new BasicDBObject("CloudID", CloudID).append("vnetName", vlanId);
+       BasicDBObject researchField = new BasicDBObject("cloudID", CloudID).append("vlan_id", vlanId);
        DBObject risultato = collection.findOne(researchField);
        
        return ((Number) risultato.get("id")).intValue();//((Number) mapObj.get("autostart")).intValue()//(float) ((double) result.get(v))
     }
+    */
      
     public void insertfedsdnNetSeg(String json, String tenant){
         
@@ -1727,11 +1901,13 @@ public String getMapInfo(String dbName, String uuidTemplate) {
         collezione.save(obj);
     }
     
-    public String getfedsdnNetSeg(String vlanId,String CloudID, String tenant){
+
+    public String getfedsdnNetSeg(String vlanId, String CloudID, String tenant){
        DB database = this.getDB(tenant);
        DBCollection collection = database.getCollection("fedsdnNetSeg");
-       BasicDBObject researchField = new BasicDBObject("CloudID", CloudID).append("vlanId", vlanId);
+       BasicDBObject researchField = new BasicDBObject("cloudID", CloudID).append("vlan_id", vlanId);
        DBObject risultato = collection.findOne(researchField);
+       if(risultato == null) return null;
        return risultato.toString();
     }
      public int getfedsdnNetSegID(String vlanId,String CloudID, String tenant){
@@ -1957,4 +2133,153 @@ public String getMapInfo(String dbName, String uuidTemplate) {
     }
     
     
+
+    
+    
+    
+    public String retrieveFedNet(String tenant, String refSite) throws MDBIException {
+
+        ArrayList<JSONObject> netNames = new ArrayList<JSONObject>();
+        BasicDBObject allQuery = new BasicDBObject();
+        BasicDBObject fields = new BasicDBObject();
+        fields.put("fedNet", 1);
+        
+//        this.insert(tenant, "NetTablesInfo", jsonTable);
+        try {
+            DB database = this.getDB(tenant);
+            DBCollection collection = database.getCollection("fednetsinSite");
+            //BasicDBObject resQuery=new BasicDBObject("fedNet",refSite);
+            BasicDBObject resQuery = new BasicDBObject("referenceSite", refSite);
+            BasicDBObject sortQuery = new BasicDBObject("version", -1);
+            //return conditionedResearch(collection, resQuery, sortQuery, fields);
+            return conditionedResearch(collection, resQuery, sortQuery);
+
+        } catch (Exception e) {
+
+            throw new MDBIException();
+
+        }
+
+        //DBCursor cursor =collection.find(allQuery,fields);
+        //Iterator<DBObject> it = cursor.iterator();
+        //ArrayList<String> net = new ArrayList();
+        //while (it.hasNext()) {
+        //     net.add(it.next().toString()); //array list di
+        // }
+        // return this.conditionedResearch(collection,resQuery,sortQuery,fields); //da modificare ritorna un solo valore per il singolo refsite
+        //return result;
+    }
+    
+    /**
+     *
+     * @param tenant
+     * @param refSite
+     * @return
+     * @throws MDBIException
+     * @author Alfonso Panarello
+     */
+    public ArrayList<String> retrieveBNANetSegFromFednet(String tenant, String refSite, Integer version, String fedNet) throws MDBIException {
+
+        //ArrayList<JSONObject > netNames= new ArrayList<JSONObject>();
+        BasicDBObject allQuery = new BasicDBObject();
+        BasicDBObject fields = new BasicDBObject();
+        BasicDBObject field = new BasicDBObject();
+
+        ArrayList<String> netEntries = new ArrayList<>();
+        fields.put("UUID", 1);
+        field.put("netEntry", 1);
+        String result = "";
+//        this.insert(tenant, "NetTablesInfo", jsonTable);
+        try {
+            DB database = this.getDB(tenant);
+            DBCollection collection = database.getCollection("BNATableData");
+            //BasicDBObject resQuery=new BasicDBObject("fedNet",refSite);
+
+            Object o = null;
+            BasicDBObject resQuery = new BasicDBObject("referenceSite", refSite).append("version", version).append("fedNet", fedNet);
+            DBCursor uuid = collection.find(resQuery);
+            System.out.println("");
+            if (!uuid.hasNext()) {
+                return null;
+            } else {
+                o = uuid.next();
+
+                collection = database.getCollection("BNANetSeg");
+                BasicDBObject bdo = (BasicDBObject) o;
+
+                resQuery = new BasicDBObject("FK", (String) bdo.get("FK"));
+                System.out.println(resQuery);
+                DBCursor fedNetArray = collection.find(resQuery, field);
+                if (fedNetArray == null) {
+                    System.out.println("fedNetArray - - -  NULL");;
+                } else {
+                    while (fedNetArray.hasNext()) {
+
+                        BasicDBObject tempObj = (BasicDBObject) fedNetArray.next();
+                        tempObj.removeField("_id");
+                        
+                        netEntries.add((tempObj.get("netEntry")).toString());
+
+                    }
+                }
+                System.out.println("NET ENTRIES: " +netEntries.toString());
+                return netEntries;
+            }
+        } catch (Exception e) {
+
+            throw new MDBIException();
+
+        }
+
+    }
+    
+    
+    
+    
+    
+    
+    
+   /* 
+    public String retrieveONEFlowTemplate(String tenant, String ManifestName, String onetempNAME) throws MDBIException {
+        DBObject query = new com.mongodb.BasicDBObject();
+        query.put("masterKey", ManifestName);
+        JSONObject manifest = null;
+        try {
+            manifest = new JSONObject(this.getObj(tenant, "master", query.toString()));
+        } catch (JSONException ex) {
+            LOGGER.error("Impossible create a JSONObject form the Object retrieved by master collection");
+        } catch (MDBIException ex) {
+            LOGGER.error("Impossible create a JSONObject form the Object retrieved by master collection");
+        }
+        query = new com.mongodb.BasicDBObject();
+        query.put("type", "ONE::Beacon::OneFlowTemplate");
+        query.put("nome", onetempNAME);
+
+        JSONArray ja = (JSONArray) manifest.remove("resources");
+        String[] arquer = new String[ja.length()];
+        for (int i = 0; i < ja.length(); i++) {
+            try {
+                arquer[i] = ja.getString(i);
+            } catch (JSONException ex) {
+                LOGGER.error("Error in Manifest resources identification, impossible analyze Manifest stored on Database");
+                throw new MDBIException("Error in Manifest resources identification, impossible analyze Manifest stored on Database");
+            }
+        }
+
+        try {
+            query.put("uuid", new com.mongodb.BasicDBObject("$in", arquer));
+            DBObject result = this.find(tenant, "resources", query);
+            result = ((DBObject) result.get("properties"));
+            result = ((DBObject) result.get("onetemplate"));
+            return result.toString();
+
+        } catch (Exception ex) {
+            LOGGER.error("Impossible create a JSONObject with the oneFlow Template retrieved from Manifest");
+            throw new MDBIException("Impossible create a JSONObject with the oneFlow Template retrieved from Manifest");
+        }
+       
+    }
+    */
+    
 }
+

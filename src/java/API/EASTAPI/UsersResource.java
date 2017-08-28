@@ -88,7 +88,8 @@ public class UsersResource {
         String cmp_endpoint=null;
         String region="RegionOne";
         
-        String configFile="/home/carmelo/NetBeansProjects/BeaconNetworkManagerDriver/web/WEB-INF/configuration_bigDataPlugin.xml";
+
+        String configFile="/home/giuseppe/NetBeansProjects/BeaconNetworkManagerDriver/web/WEB-INF/configuration_bigDataPlugin.xml";
         try 
         {   //username borrower,password borrower, endpoint 
             //1: verifica username e password
