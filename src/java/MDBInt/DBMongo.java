@@ -1877,7 +1877,7 @@ public String getMapInfo(String dbName, String uuidTemplate) {
     
     public String getfedsdnNetSeg(String vlanId,String CloudID){
        DB database = this.getDB(this.identityDB);
-       DBCollection collection = database.getCollection("fedsdnNetSeg");
+       DBCollection collection = database.getCollection("fedsdnNfedsdnNeetSeg");
        BasicDBObject researchField = new BasicDBObject("cloudID", CloudID).append("vlan_id", vlanId);
        DBObject risultato = collection.findOne(researchField);
        return risultato.toString();
@@ -1891,7 +1891,7 @@ public String getMapInfo(String dbName, String uuidTemplate) {
        return ((Number) risultato.get("id")).intValue();//((Number) mapObj.get("autostart")).intValue()//(float) ((double) result.get(v))
     }
     */
-     
+     //
     public void insertfedsdnNetSeg(String json, String tenant){
         
         DB dataBase = this.getDB(tenant);
