@@ -79,7 +79,7 @@ public class LinksResource {
         String baseBBURL=""; /////* Ricavare url BB*//////////   
         JSONObject inputSiteList=null;
         String token="";
-
+        String fednetid=null;
         HashMap SiteTables = new HashMap();
         HashMap TenantTables = new HashMap();
         HashMap MapSegTables = new HashMap();
@@ -93,6 +93,10 @@ public class LinksResource {
             lic.setCommand((String) input.get("Command"));
             lic.setFa_endpoints(((JSONArray) input.get("fa_endpoints")));
             lic.setNetwork_tables(((JSONArray) input.get("network_table")));//not used for this moment the tables are recalculated
+            if(input.containsKey("fednetID"))
+                fednetid=(String) input.get("fednetID");
+            else
+                fednetid=null;
         } catch (ParseException pe) {
             reply.put("returncode", 1);
             reply.put("errormesg", "INPUT_JSON_UNPARSABLE: OPERATION ABORTED");
@@ -102,32 +106,46 @@ public class LinksResource {
         try {
             DBMongo m = new DBMongo();
             String federationUser = m.getTenantName("token", lic.getToken());
-            Integer id = m.getfedsdnFednetID(federationUser);
-            String result="";
             ArrayList<JSONObject> netTables;
             ArrayList<JSONObject> fa_endPoints;
-/* //>>>BEACON: CREARE SERVIZIO SUL BEACON BROKER PER INVOCARE QUESTA FUNZIONALITÀ
-            OrchestrationManager om = new OrchestrationManager();
-            String result = om.makeLink(id.longValue(), federationUser, null, m);// null will be substituted with an ArrayList<JSONObject> netTables that correspond at lic.getNetwork_tables()
-               
-*/         
-            netTables= lic.getNetwork_tables();
+            if (fednetid == null) {
+                ArrayList<Integer> ids = m.getfedsdnFednetIDs(federationUser);
+                Iterator it = ids.iterator();
+                while (it.hasNext()) {
+                    Integer tmp = ((Integer) it.next());
+                    /* //>>>BEACON: CREARE SERVIZIO SUL BEACON BROKER PER INVOCARE QUESTA FUNZIONALITÀ
+                OrchestrationManager om = new OrchestrationManager();
+                String result = om.makeLink(id.longValue(), federationUser, null, m);// null will be substituted with an ArrayList<JSONObject> netTables that correspond at lic.getNetwork_tables()
+
+                     */
+                }
+                String result = "";
+
+            } else {
+                Integer tmp = new Integer(fednetid);
+                /* //>>>BEACON: CREARE SERVIZIO SUL BEACON BROKER PER INVOCARE QUESTA FUNZIONALITÀ
+                OrchestrationManager om = new OrchestrationManager();
+                String result = om.makeLink(id.longValue(), federationUser, null, m);// null will be substituted with an ArrayList<JSONObject> netTables that correspond at lic.getNetwork_tables()
+
+                 */
+            }
+            netTables = lic.getNetwork_tables();
             JSONObject job = new JSONObject();
             JSONObject job_table = new JSONObject();
-           // JSONObject j_map = new JSONObject(params);
-           JSONArray jArr =new JSONArray();
+            // JSONObject j_map = new JSONObject(params);
+            JSONArray jArr = new JSONArray();
             Iterator itr = netTables.iterator();
             while (itr.hasNext()) {
-                
+
                 Object element = itr.next().toString();
                 jArr.add(element);
-                
+
                 //System.out.print(element + " ");
             }
-            job.put("network_tables",jArr);
+            job.put("network_tables", jArr);
             //fa_endPoints =lic.getFa_endpoints();
             //HashMap params = new HashMap();
-            
+
             job.put("fedId", id);
             job.put("user", federationUser);
             /*
@@ -136,61 +154,56 @@ public class LinksResource {
             job_in.put("token",lic.getToken());
             
             job_in.put("command",lic.getCommand());*/
-            
+
             //job_in.put("arrayPoint", fa_endPoints);
-            
             //job.put("network_tables", job_table);
-            
-            
-           // job.put("infoLink", job_in);
-           
+            // job.put("infoLink", job_in);
             //job.put("mongoDb", m.toString());
-            Links ln =new Links("","");
+            Links ln = new Links("", "");
             Response r;
-            r =ln.makeLink(job,baseBBURL);
+            r = ln.makeLink(job, baseBBURL);
             if (!result.equals("ok")) {
                 reply.put("returncode", 1);
                 reply.put("errormesg", "Generic Exception: OPERATION ABORTED");
                 return reply.toJSONString();
             }
             org.json.simple.parser.JSONParser p = new org.json.simple.parser.JSONParser();
-                Object obj = null;
-                try {
-                    obj = p.parse(r.readEntity(String.class));
-                } catch (ParseException ex) {
-                    LOGGER.error("Exception occurred in Parsing JSON returned from FEDSDN \n" + ex.getMessage());
-                }
+            Object obj = null;
+            try {
+                obj = p.parse(r.readEntity(String.class));
+            } catch (ParseException ex) {
+                LOGGER.error("Exception occurred in Parsing JSON returned from FEDSDN \n" + ex.getMessage());
+            }
             //operation needed to complete link requests!
             ////////////////////////////////////////////////////////////ALFO
             ////LA FUNZIONE DELL'ORCHESTRATOR DOVRA': ritrovare la lista di tutte le cloud in federazione per il tenant
-            
-            JSONArray sites=null;
+
+            JSONArray sites = null;
             sites = (JSONArray) inputSiteList.get("site"); // bisogna valutare e verificare come sono strutturate le cloud nel json
             //suppongo nel JSON OBJECT CI SIA UN ARRAY DI SITI
             Iterator<String> it = sites.iterator();
             while (it.hasNext()) {
                 arraySites.add(it.next()); //Creo l'array list per inviarla al metodo di creazione tabelle che restitiesce hashMapTable per ogni sito
             }
-            MapSegTables= this.createNetSegTab(token, arraySites); //net segement tables
-            
+            MapSegTables = this.createNetSegTab(token, arraySites); //net segement tables
+
             //CARMELO 28/07/17
             //this.createSiteTab //creare il metodo per recuperare le info a partire da lista di siti (arraySites) e token. deve restituire un hashtable
             //iterare per i siti (vedi sotto) per inserire nella tab (come JSONObject)
             SiteTables = this.createSiteTab(token, arraySites); //site tables
             TenantTables = this.createTenantTab(token, arraySites); //site tables
-            
-            
+
             //per ogni sito invoco il web service e invio le tabelle
             Set setEntry = MapSegTables.keySet();
-            Iterator setIte=setEntry.iterator(); //siti nella hashtable
+            Iterator setIte = setEntry.iterator(); //siti nella hashtable
 
             Set setEntrySite = SiteTables.keySet();
-            Iterator setIte2=setEntrySite.iterator(); //siti nella hashtable
-            
+            Iterator setIte2 = setEntrySite.iterator(); //siti nella hashtable
+
             Set setEntryTenant = TenantTables.keySet();
-            Iterator setIte3=setEntryTenant.iterator(); //siti nella hashtable 
-            
-             for (String site_ : arraySites) {  //siti nella lista di input
+            Iterator setIte3 = setEntryTenant.iterator(); //siti nella hashtable 
+
+            for (String site_ : arraySites) {  //siti nella lista di input
 
                 //FEDNET
                 while (setIte.hasNext()) {
@@ -198,12 +211,11 @@ public class LinksResource {
                     if (extrectedSite.equals(site_)) { //controllo se il sito nella lista è presente nella hashtable ottenuta , se si estra la tabella per quel sito
                         JSONObject tab = (JSONObject) MapSegTables.get(extrectedSite); //tabella segment estratta dal sito
                         //inviare tabella a "tab" al sito corrispondente invocando webservice
-                    }
-                    else{
-                        System.out.println("Sito "+site_+"non presente in HashMaps");
-                        LOGGER.error("Sito "+site_+"non presente in HashMaps");
+                    } else {
+                        System.out.println("Sito " + site_ + "non presente in HashMaps");
+                        LOGGER.error("Sito " + site_ + "non presente in HashMaps");
 
-                    //sito non presnete nell'hashTable restituita
+                        //sito non presnete nell'hashTable restituita
                     }
                 }
 
@@ -213,36 +225,32 @@ public class LinksResource {
                     if (extrectedSite.equals(site_)) { //controllo se il sito nella lista è presente nella hashtable ottenuta , se si estra la tabella per quel sito
                         JSONObject tab2 = (JSONObject) SiteTables.get(extrectedSite); //tabella segment estratta dal sito
                         //inviare tabella a "tab" al sito corrispondente invocando webservice
-                    }
-                    else{
-                        System.out.println("Sito "+site_+"non presente in HashMaps");
-                        LOGGER.error("Sito "+site_+"non presente in HashMaps");
+                    } else {
+                        System.out.println("Sito " + site_ + "non presente in HashMaps");
+                        LOGGER.error("Sito " + site_ + "non presente in HashMaps");
 
-                    //sito non presnete nell'hashTable restituita
+                        //sito non presnete nell'hashTable restituita
                     }
                 }
-                
+
                 //TENANT
                 while (setIte3.hasNext()) {
                     String extrectedSite = setIte3.next().toString();
                     if (extrectedSite.equals(site_)) { //controllo se il sito nella lista è presente nella hashtable ottenuta , se si estra la tabella per quel sito
                         JSONObject tab3 = (JSONObject) TenantTables.get(extrectedSite); //tabella segment estratta dal sito
                         //inviare tabella a "tab" al sito corrispondente invocando webservice
-                    }
-                    else{
-                        System.out.println("Sito "+site_+"non presente in HashMaps");
-                        LOGGER.error("Sito "+site_+"non presente in HashMaps");
+                    } else {
+                        System.out.println("Sito " + site_ + "non presente in HashMaps");
+                        LOGGER.error("Sito " + site_ + "non presente in HashMaps");
 
-                    //sito non presnete nell'hashTable restituita
+                        //sito non presnete nell'hashTable restituita
                     }
                 }
                 //send 
-    
+
             }
-            
-            
+
             ///////////////////////////////////////////////////////////ALFO
-            
             ////Per ogni Cloud:
             //////>>richiamare funzione che richiede network table da neutron
             //////[questo perchè il flow prevede che sia inviata la network table al FEDSDN attraverso una chiamata PUT /fednet/ID_FEDNET con action=link
@@ -269,6 +277,7 @@ public class LinksResource {
     }
 
     /**
+     * TESTING functions
      * @param site
      * @author caromeo 
      * Builds the temporary table for the BNAs with the last updated information
@@ -284,6 +293,7 @@ public class LinksResource {
     }    
     
     /**
+     * TESTING functions
      * @param site
      * @param version
      * @author caromeo 
@@ -301,6 +311,7 @@ public class LinksResource {
     
     
     /**
+     * TESTING functions
      * @param token
      * @param site
      * @author caromeo 
@@ -318,6 +329,7 @@ public class LinksResource {
     }
     
         /**
+     * TESTING functions
      * @param token
      * @param site
      * @param version
@@ -337,6 +349,7 @@ public class LinksResource {
     
     
     /**
+     * TESTING functions
      * @param site
      * @author caromeo 
      * Builds the site table for the BNAs with the last updated information
@@ -352,10 +365,11 @@ public class LinksResource {
     }    
     
     /**
+     * TESTING functions
      * @param site
      * @param version
      * @author caromeo 
-     * Builds the site table for the BNAs with a selected version of the information
+     * Builds the site table for the BNAs with a selected version of the information 
      */
     
     public void createSiteTabVersion(String site, Integer version){

@@ -151,7 +151,7 @@ public class UsersResource {
         if(result){
             String token = m.getTenantToken("federationTenant", tenant);
             try {
-                String resulting_jsonobj= m.getObj(tenant, "datacenter", "{\"idmEndpoint\": \""+cmp_endpoint+"\"}");
+                String resulting_jsonobj= m.getObj(tenant, "datacenters", "{\"idmEndpoint\": \""+cmp_endpoint+"\"}");
                 if(resulting_jsonobj.equals(null)){
                     reply.put("returncode", 1); 
                     reply.put("errormesg", "User not Valid!");
@@ -163,7 +163,8 @@ public class UsersResource {
                     reply.put("returncode", 0); 
                     reply.put("errormesg", "None");
                     reply.put("token",token);
-                    reply.put("tenant_id", tenant);
+                    reply.put("tenant_id", m.getTenantuuidfromborrower(tenant, cmp_endpoint));
+                    return reply.toString();
                 }
             } catch (MDBIException ex) {
                 reply.put("returncode", 1); 
@@ -173,17 +174,23 @@ public class UsersResource {
                 return reply.toString();
             }
         }
-        else
+        else{
             System.out.println("No result!!!");
+            reply.put("returncode", 1); 
+                reply.put("errormesg", "site endpoint not found!");
+                reply.put("token","");
+                reply.put("tenant_id", "");
+                return reply.toString();
+        }
         
-        
-        
+        /*
+        {\"username\": \"borrower\",  \"password\": \"reviewPass\",  \"cmp_endpoint\": \"http://ctrl-t2:5000/v2.0\"}
         
         String baseBBURL="/fednet/northBr/site/MyFirstSite/"+tenant+"/users";
         Tenant ten = new Tenant(user, password);
         Response r;
         r=ten.getFedToken(input,baseBBURL);
-        
+        */
         /*
         sidm=new SimpleIDM(); //>>>BEACON: VERIFY THIS POINT
         String dbName=sidm.retrieve_TenantDB("federationTenant",tenant ); STRING STRING
@@ -248,7 +255,7 @@ public class UsersResource {
         reply.put("token",token);
         reply.put("tenant_id", tenant_id);
         *///RESTITUIRE DIRETTAMENTE LA RESPONSE DEL WEB SERVICE
-        return r.toString();
+        ////return r.toString();
     }
     
     /**

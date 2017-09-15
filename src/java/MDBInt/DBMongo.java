@@ -1817,6 +1817,36 @@ public String getMapInfo(String dbName, String uuidTemplate) {
        String tenantDbName=(String)risultato.get("federationTenant");//("dbname");
        return tenantDbName;
     }
+    /**
+     * Method used for the retrieve Database name for Federation Tenant from federated tenantuuid.
+     * @param uuid
+     * @param cloudid
+     * @return 
+     */
+    public String getTenantDBNamefromfedtenuuid(String uuid,String cloudid){
+       DB database = this.getDB(this.identityDB);
+       DBCollection collection = database.getCollection("fedtenanttoBor");
+       BasicDBObject researchField = new BasicDBObject("fedUuid", uuid);
+       researchField.append("cloudID", cloudid);
+       DBObject risultato = collection.findOne(researchField);
+       String tenantDbName=(String)risultato.get("borrowerName");
+       return tenantDbName;
+    }
+    /**
+     * Method used for the retrieve  Federated Tenant UUID from Borrower and cmp_endpoint.
+     * @param tenant
+     * @param cmp_endpoint
+     * @return tenantuuid
+     */
+    public String getTenantuuidfromborrower(String tenant,String cmp_endpoint){
+       DB database = this.getDB(this.identityDB);
+       DBCollection collection = database.getCollection("fedtenanttoBor");
+       BasicDBObject researchField = new BasicDBObject("fedUuid", tenant);
+       researchField.append("cmp_endpoint", cmp_endpoint);
+       DBObject risultato = collection.findOne(researchField);
+       String tenantuuid=(String)risultato.get("fedUuid");
+       return tenantuuid;
+    }
     
     public String getTenantName(String field,String value){
        DB database = this.getDB(this.identityDB);
@@ -1959,14 +1989,22 @@ public String getMapInfo(String dbName, String uuidTemplate) {
        DBObject risultato = collection.findOne(researchField);
        return risultato.toString();
     }
-     public int getfedsdnFednetID(String federationTenantName){
+    */
+    
+    public ArrayList getfedsdnFednetIDs(String federationTenantName){
        DB database = this.getDB(this.identityDB);
        DBCollection collection = database.getCollection("fedsdnFednet");
        BasicDBObject researchField = new BasicDBObject("federationTenantName", federationTenantName);
-       DBObject risultato = collection.findOne(researchField);
-       return ((Number) risultato.get("id")).intValue();//((Number) mapObj.get("autostart")).intValue()//(float) ((double) result.get(v))
-    }*/
+       DBCursor risultato = collection.find(researchField);
+       Iterator it=risultato.iterator();
+       ArrayList<Integer> resList=new ArrayList();
+       while(it.hasNext()){
        
+       resList.add(((Number) ((DBObject)it.next()).get("id")).intValue());
+       }
+       return resList;//((Number) mapObj.get("autostart")).intValue()//(float) ((double) result.get(v))
+    }
+    
     public String getfedsdnFednet(String fednet_name, String tenant){
        DB database = this.getDB(tenant);
        DBCollection collection = database.getCollection("fedsdnFednet");

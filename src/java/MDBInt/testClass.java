@@ -45,7 +45,7 @@ public class testClass {
     */
     public static void main(String[] args) {
         DBMongo m=new DBMongo();
-        m.init("/home/carmelo/NetBeansProjects/BeaconNetworkManagerDriver/web/WEB-INF/configuration_bigDataPlugin.xml");
+        m.init("/home/giuseppe/NetBeansProjects/BeaconNetworkManagerDriver/web/WEB-INF/configuration_bigDataPlugin.xml");
         m.connectLocale("10.9.240.1");
         
         //TENANT TABLE
