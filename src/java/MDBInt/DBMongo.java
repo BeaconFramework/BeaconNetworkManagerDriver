@@ -2437,18 +2437,27 @@ public String getMapInfo(String dbName, String uuidTemplate) {
 
             Object o = null;
             BasicDBObject resQuery = new BasicDBObject("referenceSite", refSite).append("version", version).append("fedNet", fedNet);
-            DBCursor uuid = collection.find(resQuery);
+            
+            //FROM
+            //DBCursor uuid = collection.find(resQuery);
+            //TO
+            DBCursor uuid = collection.find(resQuery).sort(new BasicDBObject("insertTimestamp",-1)).limit(1);
+            
+            
             System.out.println("");
             if (!uuid.hasNext()) {
                 return null;
             } else {
                 o = uuid.next();
-
                 collection = database.getCollection("BNANetSeg");
                 BasicDBObject bdo = (BasicDBObject) o;
 
-                resQuery = new BasicDBObject("FK", (String) bdo.get("FK"));
-                System.out.println(resQuery);
+                //FROM
+                //resQuery = new BasicDBObject("FK", (String) bdo.get("FK"));
+                //TO
+                resQuery = new BasicDBObject("FK", (String) bdo.get("Fk"));
+                
+                //System.out.println(resQuery);
                 DBCursor fedNetArray = collection.find(resQuery, field);
                 if (fedNetArray == null) {
                     System.out.println("fedNetArray - - -  NULL");;

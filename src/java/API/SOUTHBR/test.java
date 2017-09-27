@@ -8,9 +8,12 @@ package API.SOUTHBR;
 
 import JClouds_Adapter.NeutronTest;
 import MDBInt.DBMongo;
+import MDBInt.MDBIException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.ws.rs.core.Response;
@@ -36,7 +39,7 @@ public class test {
         t1Id="ab6a28b9f3624f4fa46e78247848544e";
         t2Id="0ce39f6ae8044445b31d5b7f9b34062b";
         //FAclient4 tenant istantiation. 
- /*   
+  /*   
         FA_client4Tenant fat1=new FA_client4Tenant("http://192.168.32.1:5000/v2.0",t1name,"demo","0penstack");
         FA_client4Tenant fat2=new FA_client4Tenant("http://192.168.87.1:5000/v2.0",t2name,"demo","0penstack");
         try{
@@ -52,10 +55,10 @@ public class test {
             System.out.println("Error1");
             e.printStackTrace();
         }
-      */
+  */
         //FAclient4sites istantiation. 
         ////what is missed is how to retrieve siteName
-   /*
+  /*
         FA_client4Sites fas1=new FA_client4Sites("http://10.9.240.20:5000/v2.0",t1name,"admin","password");
         FA_client4Sites fas2=new FA_client4Sites("http://10.9.240.11:5000/v2.0",t2name,"admin","password");
         //create MAP in hardcoded way for testing api
@@ -103,8 +106,18 @@ public class test {
         }
         //FA_client4Network fan2=new FA_client4Network("http://10.9.240.11:5000/v2.0",t2name,"admin","password");
         //neutron retrieving networks
-        //NeutronTest neu1=new NeutronTest("http://10.9.240.20:5000/v2.0",t1name,"admin","password","RegionOne");
-        //NeutronTest neu2=new NeutronTest("http://10.9.240.11:5000/v2.0",t2name,"admin","password","RegionOne");
+        NeutronTest neu1=new NeutronTest("http://10.9.240.20:5000/v2.0",t1name,"admin","password","RegionOne");
+        NeutronTest neu2=new NeutronTest("http://10.9.240.11:5000/v2.0",t2name,"admin","password","RegionOne");
+        */
+        /*
+        FA_client4Network fan1=new FA_client4Network("http://10.9.1.165:5000v2.0","review","review","0penstack");
+        try {
+           JSONObject rr=fan1.getNetworkTableList("10.9.1.169:4567", "aa477ca20d2f41a18f8c380db65990d5");
+           System.out.println(rr.toString(0));
+        } catch (Exception ex) {
+           Logger.getLogger(test.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        */
         /*
         Iterator<Network>itn1=neu1.listNetworks();
         Iterator<Network>itn2=neu2.listNetworks();
@@ -137,8 +150,94 @@ public class test {
             }
         }
         jaexternal.put(ja);
-      */
-    //  /*
+    */
+
+        /*
+        1) prendere in ingresso la lista dei siti, nome fednets e versione + tenant ("review")
+        2) prendere per ogni fednet i netseg che hanno quella versione
+        3) costruire tabella secondo il formato seguente:
+
+        [
+            [{netsg-sito1}, {netsg-sito2}] //fednet1
+            [{netsg-sito1}, {netsg-sito3}] //fednet2
+        ]
+        4) in uscita hashmap: sito, tabellaSITO
+      
+      
+        db.BNATableData.find()
+        {  
+           "Fk":"13abb2a2-b9ad-4aa9-977b-e23c1a08fe2f",
+           "referenceSite":"CETIC",
+           "version":115,
+           "fedNet":"provider",
+           "insertTimestamp":NumberLong("1505754007441")
+        }
+      
+        db.BNANetSeg.find()
+        {  
+           "FK":"13abb2a2-b9ad-4aa9-977b-e23c1a08fe2f",
+           "netEntry":{  {  
+           "FK":"13abb2a2-b9ad-4aa9-977b-e23c1a08fe2f",
+           "netEntry":{  
+              "tenant_id":"b0edb3a0ae3842b2a3f3969f07cd82f2",
+              "site_name":"CETIC",
+              "vnid":"d46a55d4-6cca-4d86-bf25-f03707680795",
+              "name":"provider"
+           },
+           "insertTimestamp":NumberLong("1505754007436")
+        }      
+        */
+
+        //DA RIMUOVERE
+        //--------------------------------------------------
+        String tenant = "review";
+        Integer version = 115;
+        
+        Set<String> fednets_set = new HashSet<String>();
+        fednets_set.add("reviewPrivate");
+        //fednets_set.add("testnetint");
+
+        Set<String> site_set = new HashSet<String>();
+        site_set.add("UME");
+        site_set.add("CETIC");
+        //--------------------------------------------------
+        
+        
+        // INIZIO CODICE
+        //--------------------------------------------------
+        DBMongo m = new DBMongo();
+        m.init("/home/carmelo/NetBeansProjects/BeaconNetworkManagerDriver/web/WEB-INF/configuration_bigDataPlugin.xml");
+        m.connectLocale("10.9.240.1");
+        
+        
+        Iterator<String> it_fednet = fednets_set.iterator();
+        
+        HashMap<String, ArrayList<String>> map = new HashMap<String, ArrayList<String>>();
+        
+        while (it_fednet.hasNext()) {
+            String fednet = it_fednet.next();
+
+            Iterator<String> it_site = site_set.iterator();
+            while (it_site.hasNext()) {
+                String site = it_site.next();
+                System.out.println("\n\n"+fednet+" "+site);
+        
+                try {
+                    ArrayList<String> result = m.retrieveBNANetSegFromFednet(tenant, site, version, fednet);
+                    map.put(site, result);
+                    
+                } catch (MDBIException ex) {
+                    Logger.getLogger(test.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        }
+
+        System.out.println(map);
+
+        
+        
+        //--------------------------------------------------
+    /*
         try{
         ArrayList<ArrayList<HashMap<String,Object>>> networks=new ArrayList<ArrayList<HashMap<String,Object>>>();
         ArrayList<HashMap<String,Object>> matchingNets=new ArrayList<HashMap<String,Object>>();
@@ -164,10 +263,10 @@ public class test {
         //qui si stà condividendo la stessa table con entrambe le cloud quindi si dovrà memorizzare la stessa tabella per entrambe le cloud federate. 
         ////Il caso genericon prevede che si inserisca per ogni sito una tabella diversa che può ontenere anche riferimenti precedentemente presenti riferiti a link verso altre cloud
  //06/07/2017 gt: verificare cquali funzioni usare al posto di queste due
- /*       
-        m.insertNetTable(t1name, body);
-        m.insertNetTable(t2name, body);
- */
+ 
+        //m.insertNetTable(t1name, body);
+        //m.insertNetTable(t2name, body);
+ 
             System.out.println(body);
         Response r=fan1.createNetTable(t1Id, "10.9.240.21:4567", body);
             System.out.println(r.toString());
@@ -180,7 +279,7 @@ public class test {
             e.printStackTrace();
             
         }
-   // */              
+   */              
     }
     
 }
