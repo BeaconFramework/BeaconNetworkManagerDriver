@@ -115,6 +115,7 @@ public class LinksResource {
             ArrayList<JSONObject> fa_endPoints;
             netTables = lic.getNetwork_tables();
             HashMap hm = this.retrieveFednetsInvolved(federationUser,lic.getNetwork_tables(),m);
+            HashMap<String,org.json.JSONObject> hmS_T=new HashMap<String,org.json.JSONObject> ();
             Set<String> sites = hm.keySet();
             Integer bb_version = null;
             Integer bna_version = null;
@@ -153,6 +154,7 @@ public class LinksResource {
                     }
                     KeystoneTest key = new KeystoneTest(federationUser, jc.getString("federatedUser"), jc.getString("federatedPassword"), endpoint);
                     org.json.JSONObject rr = fan1.getNetworkTableList(faurl, key.getTenantId(federationUser));
+                    hmS_T.put(s, rr);
                     bna_version = (Integer) rr.get("version");
                     //Melo's            
 
@@ -168,6 +170,8 @@ public class LinksResource {
                     if (bb_version < bna_version) {//BB<BNA: salvare la tabella ricavata dal BNa su Mongo, aumentare di uno la tabella estratta da mongo mandarla al bna e successivamente salvarla su mongo
                         //funzione di alfonso per split e storage tabella ricevuta da BNA
                         //Alfonso's bookmark.
+                        //org.json.JSONObject table,String refSite, String ten, DBMongo m
+                        this.storeIncomingBNANetTables(hmS_T.get(s),s,federationUser,m);
                     } else if (bb_version == bna_version) {//BB=BNA: recuperare la tabella e mettere in append le entry ricevute
                         
 
