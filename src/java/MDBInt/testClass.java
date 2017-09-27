@@ -45,9 +45,14 @@ public class testClass {
     */
     public static void main(String[] args) {
         DBMongo m=new DBMongo();
-        m.init("/home/giuseppe/NetBeansProjects/BeaconNetworkManagerDriver/web/WEB-INF/configuration_bigDataPlugin.xml");
+        //m.init("/home/giuseppe/NetBeansProjects/BeaconNetworkManagerDriver/web/WEB-INF/configuration_bigDataPlugin.xml");
         m.connectLocale("10.9.240.1");
-        
+        try{
+        System.out.println(m.getfedsdnFednetIDFromBNMParams("review","subnetflex", "CETIC"));
+        System.out.println(m.getVersionBNATables("review", 7, "CETIC"));
+        }catch(Exception e){
+            System.out.println(e.getMessage());
+        }
         //TENANT TABLE
         /*
         String result = m.getTenantTablesFromFedTenant("review", "review", "UME", "entryTenantTab", null);

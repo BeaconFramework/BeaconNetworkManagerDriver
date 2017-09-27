@@ -18,6 +18,8 @@ import API.EASTAPI.Clients.EastBrRESTClient;
 import API.EASTAPI.Clients.Links;
 //import static API.EASTAPI.NetworksegmentResource.LOGGER;
 import API.EASTAPI.utils_containers.LinkInfoContainers;
+import API.SOUTHBR.FA_client4Network;
+import JClouds_Adapter.KeystoneTest;
 //import OSFFM_ORC.OrchestrationManager;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -38,6 +40,7 @@ import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -83,7 +86,7 @@ public class LinksResource {
         HashMap SiteTables = new HashMap();
         HashMap TenantTables = new HashMap();
         HashMap MapSegTables = new HashMap();
-        
+        String result="";
         ArrayList <String> arraySites = null;
         try 
         {
@@ -108,6 +111,72 @@ public class LinksResource {
             String federationUser = m.getTenantName("token", lic.getToken());
             ArrayList<JSONObject> netTables;
             ArrayList<JSONObject> fa_endPoints;
+            netTables = lic.getNetwork_tables();
+            HashMap hm = this.retrieveFednetsInvolved(federationUser,lic.getNetwork_tables(),m);
+            Set<String> sites = hm.keySet();
+            Integer bb_version = null;
+            Integer bna_version = null;
+            for (String s : sites) {
+                
+                try {
+                    int fednetId=m.getfedsdnFednetIDFromBNMParams(federationUser, (String)hm.get(s), s);//("review","subnetflex", "CETIC"));//questi dati vengono dal jsonproveniente dal BNM
+                    bb_version = m.getVersionBNATables(federationUser,fednetId,s);//("review", 7, "CETIC");
+                } catch (Exception e) {
+                    System.out.println(e.getMessage());
+                }
+
+                //testare la versione tra qeulla ottenuta e quella presente sul BNA
+                //per andare avanti con il processo di creazione delle tabelle
+                
+                String endpoint = "";
+                
+                //recuperare da mongo le informazioni relative al BNA del sito ottenuto e costruire il client per il network del BNA
+                try {
+                    String cloudID = "";
+                    String tmp = m.getFederatedCredentialfromTok(federationUser, federationUser, lic.getToken(), cloudID);
+                    org.json.JSONObject jc = null;
+                    if (tmp == null) {
+                        throw new Exception("Cannot Retrieve cloud Credentials! BNA table create aborted!");
+                    } else {
+                        jc = new org.json.JSONObject(tmp);
+                    }
+                    endpoint = (String) (m.getDatacenterFromId(federationUser, cloudID)).get("idmEndpoint");
+                    FA_client4Network fan1 = new FA_client4Network(endpoint, federationUser, jc.getString("federatedUser"), jc.getString("federatedPassword"));
+                    String faurl = "";
+                    try {
+                        org.json.JSONObject faobj = new org.json.JSONObject(m.getFAInfo(federationUser, cloudID));
+                        faurl = faobj.getString("Ip") + ":" + faobj.getString("Port");
+                    } catch (org.json.JSONException je) {
+                        throw new org.json.JSONException("Cannot retrieve BNAInfo needed to interact with BNA of the site: " + cloudID);
+                    }
+                    KeystoneTest key = new KeystoneTest(federationUser, jc.getString("federatedUser"), jc.getString("federatedPassword"), endpoint);
+                    org.json.JSONObject rr = fan1.getNetworkTableList(faurl, key.getTenantId(federationUser));
+                    bna_version = (Integer) rr.get("version");
+                    //Melo's            
+
+                    HashMap<String, ArrayList<String>> map = new HashMap<String, ArrayList<String>>();
+                    String fednet = (String) hm.get(s);
+                    try {
+                        ArrayList<String> resultArr = m.retrieveBNANetSegFromFednet(federationUser, s, bb_version, fednet);
+                        map.put(s, resultArr);
+                    } catch (MDBIException ex) {
+                        LOGGER.error(ex.getMessage());
+                    }
+                    // Melo's End          
+                    if (bb_version < bna_version) {//BB<BNA: salvare la tabella ricavata dal BNa su Mongo, aumentare di uno la tabella estratta da mongo mandarla al bna e successivamente salvarla su mongo
+                        //funzione di alfonso per split e storage tabella ricevuta da BNA
+                        //Alfonso's bookmark.
+                    } else if (bb_version == bna_version) {//BB=BNA: recuperare la tabella e mettere in append le entry ricevute
+                        
+
+                    } else {//BB>BNA: inviare direttamente la tabella al BNA
+                        
+                    }
+
+                } catch (Exception ex) {
+                    System.out.println(ex.getMessage());
+                }
+            }
             if (fednetid == null) {
                 ArrayList<Integer> ids = m.getfedsdnFednetIDs(federationUser);
                 Iterator it = ids.iterator();
@@ -119,8 +188,7 @@ public class LinksResource {
 
                      */
                 }
-                String result = "";
-
+           //     String result = "";
             } else {
                 Integer tmp = new Integer(fednetid);
                 /* //>>>BEACON: CREARE SERVIZIO SUL BEACON BROKER PER INVOCARE QUESTA FUNZIONALITÀ
@@ -145,7 +213,6 @@ public class LinksResource {
             job.put("network_tables", jArr);
             //fa_endPoints =lic.getFa_endpoints();
             //HashMap params = new HashMap();
-
             job.put("fedId", id);
             job.put("user", federationUser);
             /*
@@ -550,7 +617,25 @@ public class LinksResource {
         return site_hm;
     }
     
-    
+    private HashMap retrieveFednetsInvolved(String federationUser,JSONArray networks_table,DBMongo m)throws Exception{
+        HashMap hm=new HashMap();
+        Iterator i=networks_table.iterator();
+        while(i.hasNext()){
+            JSONObject ob=(JSONObject)i.next();
+            String s=(String) ob.get("site");
+            int fednetId;
+            String fednetName="";
+            try{
+                fednetId=m.getfedsdnFednetIDFromBNMParams(federationUser, (String)ob.get("name"), s);
+                fednetName=m.getfedsdnFednet(fednetId,federationUser);
+            }
+            catch(Exception e){
+                throw new Exception("Exception occurred in retrieving information needed for BNA NetTable construction! "+e.getMessage());
+            }
+            hm.put(s, fednetName);
+        }
+        return hm;
+    }
     /**
      * @param token
      * @param site

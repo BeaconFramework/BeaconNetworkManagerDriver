@@ -11,10 +11,13 @@ import MDBInt.DBMongo;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.ws.rs.core.Response;
 import org.jclouds.openstack.neutron.v2.domain.Network;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import utils.Exception.WSException;
 
 /**
  * Class used to test FA API. 
@@ -33,7 +36,7 @@ public class test {
         t1Id="ab6a28b9f3624f4fa46e78247848544e";
         t2Id="0ce39f6ae8044445b31d5b7f9b34062b";
         //FAclient4 tenant istantiation. 
-  ///*   
+ /*   
         FA_client4Tenant fat1=new FA_client4Tenant("http://192.168.32.1:5000/v2.0",t1name,"demo","0penstack");
         FA_client4Tenant fat2=new FA_client4Tenant("http://192.168.87.1:5000/v2.0",t2name,"demo","0penstack");
         try{
@@ -49,10 +52,10 @@ public class test {
             System.out.println("Error1");
             e.printStackTrace();
         }
-   //   */
+      */
         //FAclient4sites istantiation. 
         ////what is missed is how to retrieve siteName
-  // /*
+   /*
         FA_client4Sites fas1=new FA_client4Sites("http://10.9.240.20:5000/v2.0",t1name,"admin","password");
         FA_client4Sites fas2=new FA_client4Sites("http://10.9.240.11:5000/v2.0",t2name,"admin","password");
         //create MAP in hardcoded way for testing api
@@ -89,13 +92,19 @@ public class test {
             System.out.println("Error1");
             e.printStackTrace();
         }
-   // */ 
+   */ 
         //FAclient4networks istantiation.
-        FA_client4Network fan1=new FA_client4Network("http://10.9.240.20:5000/v2.0",t1name,"admin","password");
-        FA_client4Network fan2=new FA_client4Network("http://10.9.240.11:5000/v2.0",t2name,"admin","password");
+        FA_client4Network fan1=new FA_client4Network("http://10.9.1.165:5000v2.0","review","review","0penstack");
+        try {
+            JSONObject rr=fan1.getNetworkTableList("http://10.9.1.169:", "d044e4b3bc384a5daa3678b87f97e3c2");
+            System.out.println(rr.toString(0));
+        } catch (Exception ex) {
+            Logger.getLogger(test.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        //FA_client4Network fan2=new FA_client4Network("http://10.9.240.11:5000/v2.0",t2name,"admin","password");
         //neutron retrieving networks
-        NeutronTest neu1=new NeutronTest("http://10.9.240.20:5000/v2.0",t1name,"admin","password","RegionOne");
-        NeutronTest neu2=new NeutronTest("http://10.9.240.11:5000/v2.0",t2name,"admin","password","RegionOne");
+        //NeutronTest neu1=new NeutronTest("http://10.9.240.20:5000/v2.0",t1name,"admin","password","RegionOne");
+        //NeutronTest neu2=new NeutronTest("http://10.9.240.11:5000/v2.0",t2name,"admin","password","RegionOne");
         /*
         Iterator<Network>itn1=neu1.listNetworks();
         Iterator<Network>itn2=neu2.listNetworks();

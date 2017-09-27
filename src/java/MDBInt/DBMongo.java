@@ -923,6 +923,40 @@ public class DBMongo {
         }
         return null;
     }
+    
+    /**
+     * It retrieve site credential starting from token federation user and site
+     * @param dbName
+     * @param userName
+     * @param token
+     * @param cloudID
+     * @return jsonObject that contains credential for a specified cloud or null
+     */
+    public String getFederatedCredentialfromTok(String dbName, String userName, String token, String cloudID) {
+
+        DB dataBase = this.getDB(dbName);
+        DBCollection collezione = this.getCollection(dataBase, "credentials");
+        DBObject federationUser = null;
+        BasicDBObject query = new BasicDBObject("federationUser", userName);
+        query.append("token", token);
+        BasicDBList credList;
+        Iterator it;
+        federationUser = collezione.findOne(query);
+        BasicDBObject obj;
+        if (federationUser == null) {
+            return null;
+        }
+        credList = (BasicDBList) federationUser.get("crediantialList");
+
+        it = credList.iterator();
+        while (it.hasNext()) {
+            obj = (BasicDBObject) it.next();
+            if (obj.containsValue(cloudID)) {
+                return obj.toString();
+            }
+        }
+        return null;
+    }
 
     /**
      * This use only token. It will be
@@ -1991,17 +2025,43 @@ public String getMapInfo(String dbName, String uuidTemplate) {
     }
     */
     
+    public int getfedsdnFednetIDFromBNMParams(String tenantName,String subnet, String site)throws JSONException {
+        DB database = this.getDB(tenantName);
+        DBCollection collection = database.getCollection("fedsdnNetSeg");
+        BasicDBObject researchField = new BasicDBObject("netsegEntry.name", subnet);
+        researchField.append("referenceSite", site);
+        DBObject risultato = collection.findOne(researchField);
+        return ((Number) risultato.get("fednetID")).intValue();
+
+    }
+    
+    public int getVersionBNATables(String tenantName, int fednetID, String site) throws JSONException {
+        DB database = this.getDB(tenantName);
+        DBCollection collection = database.getCollection("fedsdnFednet");
+        BasicDBObject researchField = new BasicDBObject("fednetID", new Integer(fednetID).toString());
+        DBCursor aaa=collection.find(researchField);
+        DBObject risultato = aaa.next();
+        BasicDBObject tmp=(BasicDBObject)risultato.get("fednetEntry");
+        String fednet =(String)tmp.getString("name");
+        collection = database.getCollection("BNATableData");
+        researchField = new BasicDBObject("fedNet", fednet);
+        researchField.append("referenceSite", site);
+        risultato = collection.findOne(researchField);
+        return ((Number) risultato.get("version")).intValue();
+    }
+    
+    
     public ArrayList getfedsdnFednetIDs(String federationTenantName){
-       DB database = this.getDB(this.identityDB);
+       DB database = this.getDB(federationTenantName);
        DBCollection collection = database.getCollection("fedsdnFednet");
+       //BasicDBObject researchField = new BasicDBObject("federationTenantName", federationTenantName);
        BasicDBObject researchField = new BasicDBObject("federationTenantName", federationTenantName);
        DBCursor risultato = collection.find(researchField);
        Iterator it=risultato.iterator();
        ArrayList<Integer> resList=new ArrayList();
-       while(it.hasNext()){
-       
-       resList.add(((Number) ((DBObject)it.next()).get("id")).intValue());
-       }
+        while (it.hasNext()) {
+            resList.add(((Number) ((DBObject) it.next()).get("id")).intValue());
+        }
        return resList;//((Number) mapObj.get("autostart")).intValue()//(float) ((double) result.get(v))
     }
     
