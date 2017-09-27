@@ -45,8 +45,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.UUID;
 import java.util.logging.Level;
 import javax.ws.rs.core.Response;
+import org.json.JSONException;
 
 /**
  * REST Web Service
@@ -700,4 +702,70 @@ public class LinksResource {
         System.out.println("TENANT: "+ tenant_hm.toString());
         return tenant_hm;
     }
+    
+    /**
+     * review
+     * @param table
+     * @param refSite
+     * @param tenreview
+     * @param m
+     * @author apanarello
+     * @return 
+     */
+    private org.json.JSONObject storeIncomingBNANetTables(org.json.JSONObject table,String refSite, String ten, DBMongo m){
+        
+        UUID uuid = null;
+        Integer version = null;
+        org.json.JSONObject objectJson = new org.json.JSONObject();
+        org.json.JSONObject bnaSegTab = new org.json.JSONObject();
+        org.json.JSONObject jsonObInner = new org.json.JSONObject();
+        String tenant = ten;
+        try {
+             /*<<<<<<<<<<<<<<<<<<estrazione versione della tabella ricevuta>>>>>>>>>>>>>>>>*/
+            version = table.getInt("version");
+             /*<<<<<<<<<<<<<<<<<<   estrazione JSONObject innestato nella tabella   >>>>>>>>>>>>>>>>*/
+            org.json.JSONObject innerJson = table.getJSONObject("table");
+            /*<<<<<<<<<<<<<<<<<<   Ottengo set di chiava JSONObject innestato   >>>>>>>>>>>>>>>>*/
+            Iterator tableKeys = innerJson.keys();
+            
+        /*<<<<<<<<<<<<<<<<<<  per ogni chiave estraggo il JSONArray associato  >>>>>>>>>>>>>>>>*/
+        while (tableKeys.hasNext()) {
+            
+            org.json.JSONArray Arraynext = innerJson.getJSONArray(tableKeys.next().toString());
+            Integer dim = Arraynext.length();
+            /*<<<<<<<<<<<<<<<<<<  Creo chiave FK (Foreing Key    >>>>>>>>>>>>>>>>*/
+            uuid = UUID.randomUUID();
+            /*<<<<<<<<<<<<<<<<<<   estraggo elementi array (JSON OBJECT)   >>>>>>>>>>>>>>>>*/
+            for (int i = 0; i < dim; i++) {
+                /*<<<<<<<<<<<<<<<<<<   Aggancio la chiave al JSON    >>>>>>>>>>>>>>>>*/
+                jsonObInner = Arraynext.getJSONObject(i);
+                bnaSegTab.put("FK", uuid.toString());
+                bnaSegTab.put("netEntry", jsonObInner); //da inserirer in BNANetSeg
+                try {
+                    /*<<<<<<<<<<<<<<<<<<Inserimento BNANetSeg>>>>>>>>>>>>>>>>*/
+                    m.insertNetTables(tenant, bnaSegTab.toString(0));
+                } catch (MDBIException ex) {
+                    System.out.println("errore in MONGO:   " + ex.getMessage());
+                    LOGGER.error("errore in MONGO:   " + ex.getMessage());
+                }
+
+            }
+            try {
+                /*<<<<<<<<<<<<<<<<<<      >>>>>>>>>>>>>>>>*/
+                /*<<<<<<<<<<Inserimento BNATableData>>>>>>>>>>>>>>*/
+                m.insertTablesData(uuid.toString(), tenant, version, refSite, jsonObInner.get("name").toString()); //ATTENZIONARE VEDI COMMENTO ***
+            } catch (MDBIException ex) {
+                System.out.println("error in Mongo:   " + ex.getMessage());
+                LOGGER.error("error in Mongo:   " + ex.getMessage());
+            }
+
+        }
+
+    } catch (JSONException ex) {
+        System.out.println("errore parse:   " + ex.getMessage());
+         LOGGER.error("errore parse:   " + ex.getMessage());
+    }
+       
+ return objectJson;
+}
 }
