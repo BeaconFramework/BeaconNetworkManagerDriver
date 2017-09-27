@@ -106,7 +106,7 @@ public class test {
         }
         //FA_client4Network fan2=new FA_client4Network("http://10.9.240.11:5000/v2.0",t2name,"admin","password");
         //neutron retrieving networks
-        NeutronTest neu1=new NeutronTest("http://10.9.240.20:5000/v2.0",t1name,"admin","password","RegionOne");
+     /*   NeutronTest neu1=new NeutronTest("http://10.9.240.20:5000/v2.0",t1name,"admin","password","RegionOne");
         NeutronTest neu2=new NeutronTest("http://10.9.240.11:5000/v2.0",t2name,"admin","password","RegionOne");
         */
         /*
