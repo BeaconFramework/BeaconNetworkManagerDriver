@@ -1,5 +1,5 @@
 *.class
-
+/beaconNetManDriver/nbproject/*.properties
 
 # Package Files #
 #*.jar
