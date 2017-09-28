@@ -169,6 +169,7 @@ public class LinksResource {
                         break;//verificare 
                     }
                     // Melo's End          
+                    org.json.JSONObject tab=null;
                     if (bb_version < bna_version) {//BB<BNA: salvare la tabella ricavata dal BNa su Mongo, aumentare di uno la tabella estratta da mongo mandarla al bna e successivamente salvarla su mongo
                         //funzione di alfonso per split e storage tabella ricevuta da BNA
                         //Alfonso's bookmark.
@@ -179,9 +180,9 @@ public class LinksResource {
                         
 
                     } else {//BB>BNA: inviare direttamente la tabella al BNA
-                        
+                       tab=this.constructNetworkTableJSON(resultArr, bb_version);
                     }
-
+                    //INVOKE CREATENETTABLE ON BNA
                 } catch (Exception ex) {
                     System.out.println(ex.getMessage());
                 }
