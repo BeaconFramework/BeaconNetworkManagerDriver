@@ -89,7 +89,7 @@ public class UsersResource {
         String region="RegionOne";
         
 
-        String configFile="/home/apanarello/NetBeansProjects/BeaconNetworkManagerDriver/web/WEB-INF/configuration_bigDataPlugin.xml";
+        String configFile="/home/giuseppe/NetBeansProjects/BeaconNetworkManagerDriver/web/WEB-INF/configuration_bigDataPlugin.xml";
         try 
         {   //username borrower,password borrower, endpoint 
             //1: verifica username e password
