@@ -176,9 +176,13 @@ public class LinksResource {
                         //org.json.JSONObject table,String refSite, String ten, DBMongo m
                         this.storeIncomingBNANetTables(hmS_T.get(s),s,federationUser,m);
                         
+                        
+                        
+                        
+                        tab=;
                     } else if (bb_version == bna_version) {//BB=BNA: recuperare la tabella e mettere in append le entry ricevute
                         
-
+                        tab=;
                     } else {//BB>BNA: inviare direttamente la tabella al BNA
                        tab=this.constructNetworkTableJSON(resultArr, bb_version);
                     }
