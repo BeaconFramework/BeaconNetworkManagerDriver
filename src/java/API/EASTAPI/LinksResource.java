@@ -160,13 +160,16 @@ public class LinksResource {
 
                     HashMap<String, ArrayList<String>> map = new HashMap<String, ArrayList<String>>();
                     String fednet = (String) hm.get(s);
+                    ArrayList<String> resultArr=null;
                     try {
-                        ArrayList<String> resultArr = m.retrieveBNANetSegFromFednet(federationUser, s, bb_version, fednet);
-                        map.put(s, resultArr);
+                        resultArr = m.retrieveBNANetSegFromFednet(federationUser, s, bb_version, fednet);
+                        //map.put(s, resultArr);
                     } catch (MDBIException ex) {
                         LOGGER.error(ex.getMessage());
+                        break;//verificare 
                     }
                     // Melo's End          
+                    org.json.JSONObject tab=null;
                     if (bb_version < bna_version) {//BB<BNA: salvare la tabella ricavata dal BNa su Mongo, aumentare di uno la tabella estratta da mongo mandarla al bna e successivamente salvarla su mongo
                         //funzione di alfonso per split e storage tabella ricevuta da BNA
                         //Alfonso's bookmark.
@@ -181,11 +184,11 @@ public class LinksResource {
                         
                     } else if (bb_version == bna_version) {//BB=BNA: recuperare la tabella e mettere in append le entry ricevute
                         
-
+                        tab=;
                     } else {//BB>BNA: inviare direttamente la tabella al BNA
-                        
+                       tab=this.constructNetworkTableJSON(resultArr, bb_version);
                     }
-
+                    //INVOKE CREATENETTABLE ON BNA
                 } catch (Exception ex) {
                     System.out.println(ex.getMessage());
                 }
@@ -210,7 +213,7 @@ public class LinksResource {
 
                  */
             }
-            netTables = lic.getNetwork_tables();
+/*            netTables = lic.getNetwork_tables();
             JSONObject job = new JSONObject();
             JSONObject job_table = new JSONObject();
             // JSONObject j_map = new JSONObject(params);
@@ -234,12 +237,12 @@ public class LinksResource {
             job_in.put("token",lic.getToken());
             
             job_in.put("command",lic.getCommand());*/
-
+///*
             //job_in.put("arrayPoint", fa_endPoints);
             //job.put("network_tables", job_table);
             // job.put("infoLink", job_in);
             //job.put("mongoDb", m.toString());
-            Links ln = new Links("", "");
+/*            Links ln = new Links("", "");
             Response r;
             r = ln.makeLink(job, baseBBURL);
             if (!result.equals("ok")) {
@@ -266,7 +269,7 @@ public class LinksResource {
                 arraySites.add(it.next()); //Creo l'array list per inviarla al metodo di creazione tabelle che restitiesce hashMapTable per ogni sito
             }
             MapSegTables = this.createNetSegTab(token, arraySites); //net segement tables
-
+*/
             //CARMELO 28/07/17
             //this.createSiteTab //creare il metodo per recuperare le info a partire da lista di siti (arraySites) e token. deve restituire un hashtable
             //iterare per i siti (vedi sotto) per inserire nella tab (come JSONObject)
@@ -716,15 +719,16 @@ public class LinksResource {
     
     /**
      * review
+     *
      * @param table
      * @param refSite
      * @param tenreview
      * @param m
      * @author apanarello
-     * @return 
+     * @return
      */
-    private org.json.JSONObject storeIncomingBNANetTables(org.json.JSONObject table,String refSite, String ten, DBMongo m){
-        
+    private org.json.JSONObject storeIncomingBNANetTables(org.json.JSONObject table, String refSite, String ten, DBMongo m) {
+
         UUID uuid = null;
         Integer version = null;
         org.json.JSONObject objectJson = new org.json.JSONObject();
@@ -732,56 +736,105 @@ public class LinksResource {
         org.json.JSONObject jsonObInner = new org.json.JSONObject();
         String tenant = ten;
         try {
-             /*<<<<<<<<<<<<<<<<<<estrazione versione della tabella ricevuta>>>>>>>>>>>>>>>>*/
+            /*<<<<<<<<<<<<<<<<<<estrazione versione della tabella ricevuta>>>>>>>>>>>>>>>>*/
             version = table.getInt("version");
-             /*<<<<<<<<<<<<<<<<<<   estrazione JSONObject innestato nella tabella   >>>>>>>>>>>>>>>>*/
+            /*<<<<<<<<<<<<<<<<<<   estrazione JSONObject innestato nella tabella   >>>>>>>>>>>>>>>>*/
             org.json.JSONObject innerJson = table.getJSONObject("table");
             /*<<<<<<<<<<<<<<<<<<   Ottengo set di chiava JSONObject innestato   >>>>>>>>>>>>>>>>*/
             Iterator tableKeys = innerJson.keys();
-            
-        /*<<<<<<<<<<<<<<<<<<  per ogni chiave estraggo il JSONArray associato  >>>>>>>>>>>>>>>>*/
-        while (tableKeys.hasNext()) {
-            
-            org.json.JSONArray Arraynext = innerJson.getJSONArray(tableKeys.next().toString());
-            Integer dim = Arraynext.length();
-            /*<<<<<<<<<<<<<<<<<<  Creo chiave FK (Foreing Key    >>>>>>>>>>>>>>>>*/
-            uuid = UUID.randomUUID();
-            /*<<<<<<<<<<<<<<<<<<   estraggo elementi array (JSON OBJECT)   >>>>>>>>>>>>>>>>*/
-            for (int i = 0; i < dim; i++) {
-                /*<<<<<<<<<<<<<<<<<<   Aggancio la chiave al JSON    >>>>>>>>>>>>>>>>*/
-                jsonObInner = Arraynext.getJSONObject(i);
-                bnaSegTab.put("FK", uuid.toString());
-                bnaSegTab.put("netEntry", jsonObInner); //da inserirer in BNANetSeg
+
+            /*<<<<<<<<<<<<<<<<<<  per ogni chiave estraggo il JSONArray associato  >>>>>>>>>>>>>>>>*/
+            while (tableKeys.hasNext()) {
+
+                org.json.JSONArray Arraynext = innerJson.getJSONArray(tableKeys.next().toString());
+                Integer dim = Arraynext.length();
+                /*<<<<<<<<<<<<<<<<<<  Creo chiave FK (Foreing Key    >>>>>>>>>>>>>>>>*/
+                uuid = UUID.randomUUID();
+                /*<<<<<<<<<<<<<<<<<<   estraggo elementi array (JSON OBJECT)   >>>>>>>>>>>>>>>>*/
+                for (int i = 0; i < dim; i++) {
+                    /*<<<<<<<<<<<<<<<<<<   Aggancio la chiave al JSON    >>>>>>>>>>>>>>>>*/
+                    jsonObInner = Arraynext.getJSONObject(i);
+                    bnaSegTab.put("FK", uuid.toString());
+                    bnaSegTab.put("netEntry", jsonObInner); //da inserirer in BNANetSeg
+                    try {
+                        /*<<<<<<<<<<<<<<<<<<Inserimento BNANetSeg>>>>>>>>>>>>>>>>*/
+                        m.insertNetTables(tenant, bnaSegTab.toString(0));
+                    } catch (MDBIException ex) {
+                        System.out.println("errore in MONGO:   " + ex.getMessage());
+                        LOGGER.error("errore in MONGO:   " + ex.getMessage());
+                    }
+
+                }
                 try {
-                    /*<<<<<<<<<<<<<<<<<<Inserimento BNANetSeg>>>>>>>>>>>>>>>>*/
-                    m.insertNetTables(tenant, bnaSegTab.toString(0));
+                    /*<<<<<<<<<<<<<<<<<<      >>>>>>>>>>>>>>>>*/
+                    /*<<<<<<<<<<Inserimento BNATableData>>>>>>>>>>>>>>*/
+                    m.insertTablesData(uuid.toString(), tenant, version, refSite, jsonObInner.get("name").toString()); //ATTENZIONARE VEDI COMMENTO ***
                 } catch (MDBIException ex) {
-                    System.out.println("errore in MONGO:   " + ex.getMessage());
-                    LOGGER.error("errore in MONGO:   " + ex.getMessage());
+                    System.out.println("error in Mongo:   " + ex.getMessage());
+                    LOGGER.error("error in Mongo:   " + ex.getMessage());
                 }
 
             }
-            try {
-                /*<<<<<<<<<<<<<<<<<<      >>>>>>>>>>>>>>>>*/
-                /*<<<<<<<<<<Inserimento BNATableData>>>>>>>>>>>>>>*/
-                m.insertTablesData(uuid.toString(), tenant, version, refSite, jsonObInner.get("name").toString()); //ATTENZIONARE VEDI COMMENTO ***
-            } catch (MDBIException ex) {
-                System.out.println("error in Mongo:   " + ex.getMessage());
-                LOGGER.error("error in Mongo:   " + ex.getMessage());
-            }
 
+        } catch (JSONException ex) {
+            System.out.println("errore parse:   " + ex.getMessage());
+            LOGGER.error("errore parse:   " + ex.getMessage());
         }
 
-    } catch (JSONException ex) {
-        System.out.println("errore parse:   " + ex.getMessage());
-         LOGGER.error("errore parse:   " + ex.getMessage());
+        return objectJson;
     }
+    
+    /**
+     * This function prepare the object for FA Create Network Table function.
+     * @param sites
+     * @return 
+     * @author gtricomi
+     */
+    public org.json.JSONObject constructNetworkTableJSON(ArrayList<String> networks,int version) throws JSONException{
+       /*
+        
+        [{ "tenant_id" : "aa477ca20d2f41a18f8c380db65990d5" , "site_name" : "UME" , "vnid" : "dd5ecc37-d27c-452e-9bcd-eeb6e9c55b79" , "name" : "reviewPrivate"},{ "tenant_id" : "d044e4b3bc384a5daa3678b87f97e3c2" , "site_name" : "CETIC" , "vnid" : "a779dd43-52bc-4172-9f8d-9a38374547aa" , "name" : "reviewPrivate"}]
+        */
+       org.json.JSONArray array_ext = new org.json.JSONArray();
+       org.json.JSONArray ja=null;
+       Iterator it=networks.iterator();
+       while(it.hasNext()){
+           String tab_entry=(String)it.next();
+           ja=new org.json.JSONArray(tab_entry); 
+           array_ext.put(ja);
+       }
+        
+     /*   
+        
+       org.json.JSONObject json1 = new org.json.JSONObject();
+       org.json.JSONObject json2 = new org.json.JSONObject();
+
+       json1.put("tenant_id", "aa477ca20d2f41a18f8c380db65990d5");
+       json1.put("site_name", "site1");
+       json1.put("name", "testnetint");
+       json1.put("vnid", "994522a6-22da-4106-bde7-6e5b74394ea9");
        
- return objectJson;
-}
+       json2.put("tenant_id", "d044e4b3bc384a5daa3678b87f97e3c2");
+       json2.put("site_name", "site2");
+       json2.put("name", "testnetint");
+       json2.put("vnid", "473ff6df-53fc-4f09-a281-6f27be7ca7ac");
+     
+       
+       JSONArray array_int = new JSONArray();
+       
+       array_int.put(json1);
+       array_int.put(json2);
+       array_ext.put(array_int);
+      */   
+       org.json.JSONObject global = new org.json.JSONObject();
+       global.put("version", 117);
+       global.put("table", array_ext);
+       return global;
+    }
     
      private void updateVersionInBNA(String fedUser, String refSite, Integer version, Integer newVersion, DBMongo m){
          
          m.updateTableData(fedUser, refSite, version, newVersion);
      }
+    
 }

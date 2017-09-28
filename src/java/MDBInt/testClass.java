@@ -48,11 +48,17 @@ public class testClass {
         //m.init("/home/giuseppe/NetBeansProjects/BeaconNetworkManagerDriver/web/WEB-INF/configuration_bigDataPlugin.xml");
         m.connectLocale("10.9.240.1");
         try{
-        System.out.println(m.getfedsdnFednetIDFromBNMParams("review","subnetflex", "CETIC"));
-        System.out.println(m.getVersionBNATables("review", 7, "CETIC"));
+        m.updateTableData("review", "site2", 20, 100);
+        //System.out.println(m.getVersionBNATables("review", 7, "CETIC"));
         }catch(Exception e){
             System.out.println(e.getMessage());
         }
+        
+        
+        
+        
+        
+        
         //TENANT TABLE
         /*
         String result = m.getTenantTablesFromFedTenant("review", "review", "UME", "entryTenantTab", null);
