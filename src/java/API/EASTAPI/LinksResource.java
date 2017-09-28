@@ -172,6 +172,13 @@ public class LinksResource {
                         //Alfonso's bookmark.
                         //org.json.JSONObject table,String refSite, String ten, DBMongo m
                         this.storeIncomingBNANetTables(hmS_T.get(s),s,federationUser,m);
+                        
+                        this.updateVersionInBNA(federationUser, s, bb_version, bna_version, m);
+                        
+                        
+                        
+                        
+                        
                     } else if (bb_version == bna_version) {//BB=BNA: recuperare la tabella e mettere in append le entry ricevute
                         
 
@@ -772,4 +779,9 @@ public class LinksResource {
        
  return objectJson;
 }
+    
+     private void updateVersionInBNA(String fedUser, String refSite, Integer version, Integer newVersion, DBMongo m){
+         
+         m.updateTableData(fedUser, refSite, version, newVersion);
+     }
 }
