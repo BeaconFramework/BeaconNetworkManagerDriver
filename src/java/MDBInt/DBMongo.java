@@ -1130,6 +1130,21 @@ public class DBMongo {
         return null;
     }
 
+    public void updateTableData(String dbName, String refSite, Integer version, Integer newVers) {
+
+        BasicDBObject set = new BasicDBObject("$set", new BasicDBObject("version", newVers+1));
+        DB dataBase = this.getDB(dbName);
+        DBCollection collezione = this.getCollection(dataBase, "BNATableData");
+        //BasicDBObject obj = new BasicDBObject();
+        String userName;
+        //obj.append("version", newVers+1);
+        
+        BasicDBObject resQuery = new BasicDBObject("referenceSite", refSite).append("version", version);
+        
+        collezione.updateMulti(resQuery, set);
+        //collezione.save(obj);
+    }
+    
     public void updateUser(String dbName, String collectionName, String docJSON) {
 
         DB dataBase = this.getDB(dbName);
@@ -1187,6 +1202,7 @@ public class DBMongo {
         DB dataBase = this.getDB(dbName);
         DBCollection collezione = this.getCollection(dataBase, collectionName);
         DBObject federationUser = null;
+        
         BasicDBObject query = new BasicDBObject("cloudId", cloudId);
 
         federationUser = collezione.findOne(query);
