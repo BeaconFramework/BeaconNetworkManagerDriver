@@ -836,55 +836,23 @@ public class LinksResource {
      * @author gtricomi
      */
     public org.json.JSONObject append_ConstructNetworkTableJSON(org.json.JSONObject toUpdate,ArrayList<String> networks,int version) throws JSONException{
-       /*
-        
-        [{ "tenant_id" : "aa477ca20d2f41a18f8c380db65990d5" , "site_name" : "UME" , "vnid" : "dd5ecc37-d27c-452e-9bcd-eeb6e9c55b79" , "name" : "reviewPrivate"},{ "tenant_id" : "d044e4b3bc384a5daa3678b87f97e3c2" , "site_name" : "CETIC" , "vnid" : "a779dd43-52bc-4172-9f8d-9a38374547aa" , "name" : "reviewPrivate"}]
-        */
        org.json.JSONArray array_ext = new org.json.JSONArray();
        org.json.JSONObject tmpjofednet =(org.json.JSONObject)toUpdate.get("table");
        Iterator<String> fednets=tmpjofednet.keys();
        while(fednets.hasNext()){
           String tmp=fednets.next();
           org.json.JSONArray jatmp=tmpjofednet.getJSONArray(tmp);
-          
+          array_ext.put(jatmp);
        }
-       
-       
-       
-       
-       
        org.json.JSONArray ja=null;
        Iterator it=networks.iterator();
        while(it.hasNext()){
            String tab_entry=(String)it.next();
            ja=new org.json.JSONArray(tab_entry); 
            array_ext.put(ja);
-       }
-        
-     /*   
-        
-       org.json.JSONObject json1 = new org.json.JSONObject();
-       org.json.JSONObject json2 = new org.json.JSONObject();
-
-       json1.put("tenant_id", "aa477ca20d2f41a18f8c380db65990d5");
-       json1.put("site_name", "site1");
-       json1.put("name", "testnetint");
-       json1.put("vnid", "994522a6-22da-4106-bde7-6e5b74394ea9");
-       
-       json2.put("tenant_id", "d044e4b3bc384a5daa3678b87f97e3c2");
-       json2.put("site_name", "site2");
-       json2.put("name", "testnetint");
-       json2.put("vnid", "473ff6df-53fc-4f09-a281-6f27be7ca7ac");
-     
-       
-       JSONArray array_int = new JSONArray();
-       
-       array_int.put(json1);
-       array_int.put(json2);
-       array_ext.put(array_int);
-      */   
+       }  
        org.json.JSONObject global = new org.json.JSONObject();
-       global.put("version", 117);
+       global.put("version", version);
        global.put("table", array_ext);
        return global;
     }
