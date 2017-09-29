@@ -186,9 +186,13 @@ public class LinksResource {
                        tab=this.constructNetworkTableJSON(resultArr, bb_version);
                     }
                     //INVOKE CREATENETTABLE ON BNA
+                    ////1 inserire tenant su BNA
+                    ////2 Inserire site table su BNA
+                    ////3 Inserire NetTable su BNA
                 } catch (Exception ex) {
                     System.out.println(ex.getMessage());
                 }
+                
             }
             if (fednetid == null) {
                 ArrayList<Integer> ids = m.getfedsdnFednetIDs(federationUser);
