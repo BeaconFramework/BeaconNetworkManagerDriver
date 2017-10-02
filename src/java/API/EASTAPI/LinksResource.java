@@ -870,7 +870,7 @@ public class LinksResource {
        array_ext.put(array_int);
       */   
        org.json.JSONObject global = new org.json.JSONObject();
-       global.put("version", 117);
+       global.put("version", version);
        global.put("table", array_ext);
        return global;
     }
