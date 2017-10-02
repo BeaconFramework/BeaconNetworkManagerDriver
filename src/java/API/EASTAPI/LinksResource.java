@@ -62,6 +62,7 @@ public class LinksResource {
     @Context
     private UriInfo context;
     static final Logger LOGGER = Logger.getLogger(LinksResource.class);
+
     /**
      * Creates a new instance of LinksResource
      */
@@ -70,38 +71,44 @@ public class LinksResource {
 
     /**
      * Retrieves representation of an instance of EASTTAPI.LinksResource
+     *
      * @return an instance of java.lang.String
      */
     @PUT
     @Consumes("application/json")
     @Produces("application/json")
     public String LinkFunctions(String content) {
-        
-        JSONObject reply=new JSONObject();
-        JSONParser parser= new JSONParser();
-        JSONObject input=null;
-        LinkInfoContainers lic=new LinkInfoContainers();
-        String baseBBURL=""; /////* Ricavare url BB*//////////   
-        JSONObject inputSiteList=null;
-        String token="";
-        String fednetid=null;
+        ArrayList<String> arrayTables = new ArrayList<String>();
+        arrayTables.add("BNATableData");
+        arrayTables.add("TenantTables");
+        arrayTables.add("siteTables");
+        arrayTables.add("fednetsinSite");
+
+        JSONObject reply = new JSONObject();
+        JSONParser parser = new JSONParser();
+        JSONObject input = null;
+        LinkInfoContainers lic = new LinkInfoContainers();
+        String baseBBURL = ""; /////* Ricavare url BB*//////////   
+        JSONObject inputSiteList = null;
+        String token = "";
+        String fednetid = null;
         HashMap SiteTables = new HashMap();
         HashMap TenantTables = new HashMap();
         HashMap MapSegTables = new HashMap();
-        String result="";
-        ArrayList <String> arraySites = null;
-        try 
-        {
-            input=(JSONObject) parser.parse(content);
-            lic.setType((String)input.get("type"));
+        String result = "";
+        ArrayList<String> arraySites = null;
+        try {
+            input = (JSONObject) parser.parse(content);
+            lic.setType((String) input.get("type"));
             lic.setToken((String) input.get("token"));//utilizzerò questo elemento per identificare federation tenant
             lic.setCommand((String) input.get("Command"));
             lic.setFa_endpoints(((JSONArray) input.get("fa_endpoints")));
             lic.setNetwork_tables(((JSONArray) input.get("network_table")));//not used for this moment the tables are recalculated
-            if(input.containsKey("fednetID"))
-                fednetid=(String) input.get("fednetID");
-            else
-                fednetid=null;
+            if (input.containsKey("fednetID")) {
+                fednetid = (String) input.get("fednetID");
+            } else {
+                fednetid = null;
+            }
         } catch (ParseException pe) {
             reply.put("returncode", 1);
             reply.put("errormesg", "INPUT_JSON_UNPARSABLE: OPERATION ABORTED");
@@ -114,25 +121,24 @@ public class LinksResource {
             ArrayList<JSONObject> netTables;
             ArrayList<JSONObject> fa_endPoints;
             netTables = lic.getNetwork_tables();
-            HashMap hm = this.retrieveFednetsInvolved(federationUser,lic.getNetwork_tables(),m);
-            HashMap<String,org.json.JSONObject> hmS_T=new HashMap<String,org.json.JSONObject> ();
+            HashMap hm = this.retrieveFednetsInvolved(federationUser, lic.getNetwork_tables(), m);
+            HashMap<String, org.json.JSONObject> hmS_T = new HashMap<String, org.json.JSONObject>();
             Set<String> sites = hm.keySet();
             Integer bb_version = null;
             Integer bna_version = null;
             for (String s : sites) {
-                
+
                 try {
-                    int fednetId=m.getfedsdnFednetIDFromBNMParams(federationUser, (String)hm.get(s), s);//("review","subnetflex", "CETIC"));//questi dati vengono dal jsonproveniente dal BNM
-                    bb_version = m.getVersionBNATables(federationUser,fednetId,s);//("review", 7, "CETIC");
+                    int fednetId = m.getfedsdnFednetIDFromBNMParams(federationUser, (String) hm.get(s), s);//("review","subnetflex", "CETIC"));//questi dati vengono dal jsonproveniente dal BNM
+                    bb_version = m.getVersionBNATables(federationUser, fednetId, s);//("review", 7, "CETIC");
                 } catch (Exception e) {
                     System.out.println(e.getMessage());
                 }
 
                 //testare la versione tra qeulla ottenuta e quella presente sul BNA
                 //per andare avanti con il processo di creazione delle tabelle
-                
                 String endpoint = "";
-                
+
                 //recuperare da mongo le informazioni relative al BNA del sito ottenuto e costruire il client per il network del BNA
                 try {
                     String cloudID = "";
@@ -154,14 +160,14 @@ public class LinksResource {
                     }
                     KeystoneTest key = new KeystoneTest(federationUser, jc.getString("federatedUser"), jc.getString("federatedPassword"), endpoint);
                     org.json.JSONObject rr = fan1.getNetworkTableList(faurl, key.getTenantId(federationUser));
- //INSERIRE CONTROLLO PER TABELLA NON PRESENTE SUL BNA
+                    //INSERIRE CONTROLLO PER TABELLA NON PRESENTE SUL BNA
                     hmS_T.put(s, rr);
                     bna_version = (Integer) rr.get("version");
                     //Melo's            
 
                     HashMap<String, ArrayList<String>> map = new HashMap<String, ArrayList<String>>();
                     String fednet = (String) hm.get(s);
-                    ArrayList<String> resultArr=null;
+                    ArrayList<String> resultArr = null;
                     try {
                         resultArr = m.retrieveBNANetSegFromFednet(federationUser, s, bb_version, fednet);
                         //map.put(s, resultArr);
@@ -170,30 +176,31 @@ public class LinksResource {
                         break;//verificare 
                     }
                     // Melo's End          
-                    org.json.JSONObject tab=null;
+                    org.json.JSONObject tab = null;
                     if (bb_version < bna_version) {//BB<BNA: salvare la tabella ricavata dal BNa su Mongo, aumentare di uno la tabella estratta da mongo mandarla al bna e successivamente salvarla su mongo
                         //funzione di alfonso per split e storage tabella ricevuta da BNA
                         //Alfonso's bookmark.
                         //org.json.JSONObject table,String refSite, String ten, DBMongo m
-                        this.storeIncomingBNANetTables(hmS_T.get(s),s,federationUser,m);
-                        this.updateVersionInBNA(federationUser, s, bb_version, bna_version, m);
+                        this.storeIncomingBNANetTables(hmS_T.get(s), s, federationUser, m);
                         
-                        tab=this.constructNetworkTableJSON(resultArr, bna_version+1);
+                            this.updateVersionInTables(federationUser, s, bb_version, bna_version, m, arrayTables);
+                        
+                        tab = this.constructNetworkTableJSON(resultArr, bna_version + 1);
                     } else if (bb_version == bna_version) {//BB=BNA: recuperare la tabella e mettere in append le entry ricevute
-                        org.json.JSONObject tmpjotab =(org.json.JSONObject)hmS_T.get(s);
-                        tab=this.append_ConstructNetworkTableJSON(tmpjotab, resultArr, bb_version);
-                     } else {//BB>BNA: inviare direttamente la tabella al BNA
-                       tab=this.constructNetworkTableJSON(resultArr, bb_version);
+                        org.json.JSONObject tmpjotab = (org.json.JSONObject) hmS_T.get(s);
+                        tab = this.append_ConstructNetworkTableJSON(tmpjotab, resultArr, bb_version);
+                    } else {//BB>BNA: inviare direttamente la tabella al BNA
+                        tab = this.constructNetworkTableJSON(resultArr, bb_version);
                     }
                     //INVOKE CREATENETTABLE ON BNA
                     ////1 inserire tenant su BNA
                     ////2 Inserire site table su BNA
                     ////3 Inserire NetTable su BNA
-                    
+
                 } catch (Exception ex) {
                     System.out.println(ex.getMessage());
                 }
-                
+
             }
             if (fednetid == null) {
                 ArrayList<Integer> ids = m.getfedsdnFednetIDs(federationUser);
@@ -206,7 +213,7 @@ public class LinksResource {
 
                      */
                 }
-           //     String result = "";
+                //     String result = "";
             } else {
                 Integer tmp = new Integer(fednetid);
                 /* //>>>BEACON: CREARE SERVIZIO SUL BEACON BROKER PER INVOCARE QUESTA FUNZIONALITÀ
@@ -215,7 +222,7 @@ public class LinksResource {
 
                  */
             }
-/*            netTables = lic.getNetwork_tables();
+            /*            netTables = lic.getNetwork_tables();
             JSONObject job = new JSONObject();
             JSONObject job_table = new JSONObject();
             // JSONObject j_map = new JSONObject(params);
@@ -271,7 +278,7 @@ public class LinksResource {
                 arraySites.add(it.next()); //Creo l'array list per inviarla al metodo di creazione tabelle che restitiesce hashMapTable per ogni sito
             }
             MapSegTables = this.createNetSegTab(token, arraySites); //net segement tables
-*/
+             */
             //CARMELO 28/07/17
             //this.createSiteTab //creare il metodo per recuperare le info a partire da lista di siti (arraySites) e token. deve restituire un hashtable
             //iterare per i siti (vedi sotto) per inserire nella tab (come JSONObject)
@@ -861,11 +868,20 @@ public class LinksResource {
        global.put("table", array_ext);
        return global;
     }
+    /**
+     * @author apanarello
+     * @param fedUser
+     * @param refSite
+     * @param version
+     * @param newVersion
+     * @param m 
+     */
     
-    
-     private void updateVersionInBNA(String fedUser, String refSite, Integer version, Integer newVersion, DBMongo m){
+     public void updateVersionInTables(String fedUser, String refSite, Integer version, Integer newVersion, DBMongo m,ArrayList<String> whatTable){
+          for (int i = 0; i < whatTable.size(); i++) {
+                m.updateTableVersion(fedUser, refSite, version, newVersion, whatTable.get(i));
+          }
          
-         m.updateTableData(fedUser, refSite, version, newVersion);
      }
     
 }

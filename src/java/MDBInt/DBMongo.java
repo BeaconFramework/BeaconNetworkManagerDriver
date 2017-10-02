@@ -1130,13 +1130,13 @@ public class DBMongo {
         return null;
     }
 
-    public void updateTableData(String dbName, String refSite, Integer version, Integer newVers) {
+    public void updateTableVersion(String dbName, String refSite, Integer version, Integer newVers, String table) {
 
         BasicDBObject set = new BasicDBObject("$set", new BasicDBObject("version", newVers+1));
         DB dataBase = this.getDB(dbName);
-        DBCollection collezione = this.getCollection(dataBase, "BNATableData");
+        DBCollection collezione = this.getCollection(dataBase, table);
         //BasicDBObject obj = new BasicDBObject();
-        String userName;
+        //String userName;
         //obj.append("version", newVers+1);
         
         BasicDBObject resQuery = new BasicDBObject("referenceSite", refSite).append("version", version);
@@ -1145,6 +1145,7 @@ public class DBMongo {
         //collezione.save(obj);
     }
     
+       
     public void updateUser(String dbName, String collectionName, String docJSON) {
 
         DB dataBase = this.getDB(dbName);
