@@ -610,12 +610,12 @@ public class DBMongo {
      * @param docJSON 
      * @author gtricomi, caromeo
      */
-
-    public void insertSiteTables(String dbName,String faSite, String docJSON, Integer version) {
-
+public void insertSiteTables(String dbName,String faSite, String docJSON, Integer version) {
         DB dataBase = this.getDB(dbName);
         DBCollection collezione = this.getCollection(dataBase, "siteTables");
-        BasicDBObject obj = (BasicDBObject) JSON.parse(docJSON);
+        BasicDBObject obj=new BasicDBObject();
+        BasicDBObject obj_inner = (BasicDBObject) JSON.parse(docJSON);
+        obj.append("siteEntry", obj_inner);
         obj.append("referenceSite", faSite);
         obj.append("version", version);
         obj.append("insertTimestamp", System.currentTimeMillis());

@@ -109,6 +109,8 @@ public class LinksResource {
         }
 
         try {
+            String errMSG="";
+            boolean errorOccured=false;
             DBMongo m = new DBMongo();
             String federationUser = m.getTenantName("token", lic.getToken());
             ArrayList<JSONObject> netTables;
@@ -135,7 +137,7 @@ public class LinksResource {
                 
                 //recuperare da mongo le informazioni relative al BNA del sito ottenuto e costruire il client per il network del BNA
                 try {
-                    String cloudID = "";
+                    String cloudID = s;
                     String tmp = m.getFederatedCredentialfromTok(federationUser, federationUser, lic.getToken(), cloudID);
                     org.json.JSONObject jc = null;
                     if (tmp == null) {
@@ -155,15 +157,15 @@ public class LinksResource {
                     KeystoneTest key = new KeystoneTest(federationUser, jc.getString("federatedUser"), jc.getString("federatedPassword"), endpoint);
                     org.json.JSONObject rr = fan1.getNetworkTableList(faurl, key.getTenantId(federationUser));
  //INSERIRE CONTROLLO PER TABELLA NON PRESENTE SUL BNA
-                    hmS_T.put(s, rr);
+                    hmS_T.put(cloudID, rr);
                     bna_version = (Integer) rr.get("version");
                     //Melo's            
 
                     HashMap<String, ArrayList<String>> map = new HashMap<String, ArrayList<String>>();
-                    String fednet = (String) hm.get(s);
+                    String fednet = (String) hm.get(cloudID);
                     ArrayList<String> resultArr=null;
                     try {
-                        resultArr = m.retrieveBNANetSegFromFednet(federationUser, s, bb_version, fednet);
+                        resultArr = m.retrieveBNANetSegFromFednet(federationUser, cloudID, bb_version, fednet);
                         //map.put(s, resultArr);
                     } catch (MDBIException ex) {
                         LOGGER.error(ex.getMessage());
@@ -175,46 +177,83 @@ public class LinksResource {
                         //funzione di alfonso per split e storage tabella ricevuta da BNA
                         //Alfonso's bookmark.
                         //org.json.JSONObject table,String refSite, String ten, DBMongo m
-                        this.storeIncomingBNANetTables(hmS_T.get(s),s,federationUser,m);
-                        this.updateVersionInBNA(federationUser, s, bb_version, bna_version, m);
-                        
+                        this.storeIncomingBNANetTables(hmS_T.get(cloudID),cloudID,federationUser,m);
+                        this.updateVersionInBNA(federationUser, cloudID, bb_version, bna_version, m);
+                        //Inserire update version per tabelle tenant e sito
                         tab=this.constructNetworkTableJSON(resultArr, bna_version+1);
                     } else if (bb_version == bna_version) {//BB=BNA: recuperare la tabella e mettere in append le entry ricevute
-                        org.json.JSONObject tmpjotab =(org.json.JSONObject)hmS_T.get(s);
+                        org.json.JSONObject tmpjotab =(org.json.JSONObject)hmS_T.get(cloudID);
                         tab=this.append_ConstructNetworkTableJSON(tmpjotab, resultArr, bb_version);
                      } else {//BB>BNA: inviare direttamente la tabella al BNA
                        tab=this.constructNetworkTableJSON(resultArr, bb_version);
                     }
                     //INVOKE CREATENETTABLE ON BNA
                     ////1 inserire tenant su BNA
+                    String tmptmp=m.getTenantTables(federationUser,cloudID,bb_version);
+                    org.json.JSONObject tenantEntry=new org.json.JSONObject(tmptmp);
+                    
                     ////2 Inserire site table su BNA
+                    /*
+                    [
+                        {"tenant_id": "aa146d1022fe4dd1a29042c2f234d847", "name": "site1", "site_proxy": [{"ip": "192.168.32.250", "port": 4789}], "fa_url": "192.168.32.250:4567"},
+                        {"tenant_id": "aa146d1022fe4dd1a29042c2f234d84b", "name": "site2", "site_proxy": [{"ip": "192.168.87.250", "port": 4789}], "fa_url": "192.168.87.250:4567"}
+                    ]
+                    */
+                    org.json.JSONArray siteMap=new org.json.JSONArray();
+                    for(String refSite : sites)
+                        siteMap.put(new org.json.JSONObject(m.getSiteTables(federationUser,refSite,bb_version)));
+                    
                     ////3 Inserire NetTable su BNA
                     
-                } catch (Exception ex) {
-                    System.out.println(ex.getMessage());
                 }
-                
+                catch (MDBIException ex) {
+                    System.out.println(ex.getMessage());
+                    errMSG="MDBIException occurred in inner Try-Catch of LinksResource WS! Exception Message: "+ex.getMessage();
+                } 
+                catch (org.json.JSONException ex) {
+                    System.out.println(ex.getMessage());
+                    errMSG="JSONException occurred in inner Try-Catch of LinksResource WS! Exception Message: "+ex.getMessage();
+                } 
+                catch (Exception ex) {
+                    System.out.println(ex.getMessage());
+                    errMSG="Generic Exception occurred in inner Try-Catch of LinksResource WS! Exception Message: "+ex.getMessage();
+                }
             }
-            if (fednetid == null) {
+        } catch (Exception eg) {
+            reply.put("returncode", 1);
+            reply.put("errormesg", "Generic Exception: OPERATION ABORTED");
+            return reply.toJSONString();
+        }
+        reply.put("returncode", 0);
+        reply.put("errormesg", "None");
+        return reply.toJSONString();
+    }
+
+
+
+
+
+    /*        if (fednetid == null) {
                 ArrayList<Integer> ids = m.getfedsdnFednetIDs(federationUser);
                 Iterator it = ids.iterator();
                 while (it.hasNext()) {
                     Integer tmp = ((Integer) it.next());
-                    /* //>>>BEACON: CREARE SERVIZIO SUL BEACON BROKER PER INVOCARE QUESTA FUNZIONALITÀ
-                OrchestrationManager om = new OrchestrationManager();
-                String result = om.makeLink(id.longValue(), federationUser, null, m);// null will be substituted with an ArrayList<JSONObject> netTables that correspond at lic.getNetwork_tables()
+                    //>>>BEACON: CREARE SERVIZIO SUL BEACON BROKER PER INVOCARE QUESTA FUNZIONALITÀ
+                //OrchestrationManager om = new OrchestrationManager();
+                //String result = om.makeLink(id.longValue(), federationUser, null, m);// null will be substituted with an ArrayList<JSONObject> netTables that correspond at lic.getNetwork_tables()
 
-                     */
+                  
                 }
            //     String result = "";
             } else {
                 Integer tmp = new Integer(fednetid);
-                /* //>>>BEACON: CREARE SERVIZIO SUL BEACON BROKER PER INVOCARE QUESTA FUNZIONALITÀ
-                OrchestrationManager om = new OrchestrationManager();
-                String result = om.makeLink(id.longValue(), federationUser, null, m);// null will be substituted with an ArrayList<JSONObject> netTables that correspond at lic.getNetwork_tables()
+                //>>>BEACON: CREARE SERVIZIO SUL BEACON BROKER PER INVOCARE QUESTA FUNZIONALITÀ
+                //OrchestrationManager om = new OrchestrationManager();
+                //String result = om.makeLink(id.longValue(), federationUser, null, m);// null will be substituted with an ArrayList<JSONObject> netTables that correspond at lic.getNetwork_tables()
 
-                 */
+                
             }
+*/            
 /*            netTables = lic.getNetwork_tables();
             JSONObject job = new JSONObject();
             JSONObject job_table = new JSONObject();
@@ -233,12 +272,12 @@ public class LinksResource {
             //HashMap params = new HashMap();
             job.put("fedId", id);
             job.put("user", federationUser);
-            /*
+            
             job_in.put("type",lic.getType());
             
             job_in.put("token",lic.getToken());
             
-            job_in.put("command",lic.getCommand());*/
+            job_in.put("command",lic.getCommand());
 ///*
             //job_in.put("arrayPoint", fa_endPoints);
             //job.put("network_tables", job_table);
@@ -275,7 +314,7 @@ public class LinksResource {
             //CARMELO 28/07/17
             //this.createSiteTab //creare il metodo per recuperare le info a partire da lista di siti (arraySites) e token. deve restituire un hashtable
             //iterare per i siti (vedi sotto) per inserire nella tab (come JSONObject)
-            SiteTables = this.createSiteTab(token, arraySites); //site tables
+ /*           SiteTables = this.createSiteTab(token, arraySites); //site tables
             TenantTables = this.createTenantTab(token, arraySites); //site tables
 
             //per ogni sito invoco il web service e invio le tabelle
@@ -343,6 +382,7 @@ public class LinksResource {
             ////// il FA quindi dovranno essere rielaborate prima di rimandarle al FA
             //////)]
             //////>>a questo punto il FEDSDN attraverso l'adapter invoca questo WebService
+
         } catch (Exception eg) {
             reply.put("returncode", 1);
             reply.put("errormesg", "Generic Exception: OPERATION ABORTED");
@@ -352,7 +392,7 @@ public class LinksResource {
         reply.put("errormesg", "None");
         return reply.toJSONString();
     }
-
+*/
     /**
      * Sub-resource locator method for {name}
      */
