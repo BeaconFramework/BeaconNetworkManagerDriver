@@ -827,10 +827,11 @@ public class LinksResource {
     }
     
     /**
-     * This function prepare the object for FA Create Network Table function.
-     * @param sites
-     * @return 
-     * @author gtricomi
+     * 
+     * @param networks
+     * @param version
+     * @return
+     * @throws JSONException 
      */
     public org.json.JSONObject constructNetworkTableJSON(ArrayList<String> networks,int version) throws JSONException{
        /*
