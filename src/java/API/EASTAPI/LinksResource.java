@@ -19,6 +19,8 @@ import API.EASTAPI.Clients.Links;
 //import static API.EASTAPI.NetworksegmentResource.LOGGER;
 import API.EASTAPI.utils_containers.LinkInfoContainers;
 import API.SOUTHBR.FA_client4Network;
+import API.SOUTHBR.FA_client4Sites;
+import API.SOUTHBR.FA_client4Tenant;
 import JClouds_Adapter.KeystoneTest;
 //import OSFFM_ORC.OrchestrationManager;
 import javax.ws.rs.Consumes;
@@ -195,10 +197,17 @@ public class LinksResource {
                        tab=this.constructNetworkTableJSON(resultArr, bb_version);
                     }
                     //INVOKE CREATENETTABLE ON BNA
+                    String endpoint_=(String)(new org.json.JSONObject(m.getDatacenter(federationUser, cloudID))).get("idmEndpoint");
+                    org.json.JSONObject cred=new org.json.JSONObject(m.getFederatedCredentialfromTok(federationUser,federationUser,lic.getToken(), cloudID));
+                    String user=cred.getString("federatedUser");
+                    String pass=cred.getString("federatedPassword");
                     ////1 inserire tenant su BNA
                     String tmptmp=m.getTenantTables(federationUser,cloudID,bb_version);
                     org.json.JSONObject tenantEntry=new org.json.JSONObject(tmptmp);
-                    
+                    FA_client4Tenant fat=new FA_client4Tenant(endpoint,federationUser,user,pass);
+                    if(!fat.createTenantFA(tenantEntry, faurl)){
+                       //gestione dell'errore 
+                    }
                     ////2 Inserire site table su BNA
                     /*
                     [
@@ -209,9 +218,12 @@ public class LinksResource {
                     org.json.JSONArray siteMap=new org.json.JSONArray();
                     for(String refSite : sites)
                         siteMap.put(new org.json.JSONObject(m.getSiteTables(federationUser,refSite,bb_version)));
-                    
+                    FA_client4Sites fas=new FA_client4Sites(endpoint,federationUser,user,pass);
+                    org.json.JSONObject fa_url=new org.json.JSONObject(m.getFAInfo(federationUser, cloudID));
+                    Response r=fas.createSiteTable(tenantEntry.getString("tenant_id"), fa_url.getString("Ip")+":"+fa_url.getString("Port"), siteMap.toString(0));//aggiungere check
                     ////3 Inserire NetTable su BNA
-                    
+                    FA_client4Network fan=new FA_client4Network(endpoint,federationUser,user,pass);
+                    Response rn=fan.createNetTable(tenantEntry.getString("tenant_id"), fa_url.getString("Ip")+":"+fa_url.getString("Port"), tab.toString(0));//aggiungere check
                 }
                 catch (MDBIException ex) {
                     System.out.println(ex.getMessage());

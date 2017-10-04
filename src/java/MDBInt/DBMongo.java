@@ -2008,11 +2008,15 @@ public String getMapInfo(String dbName, String uuidTemplate) {
      public int getfedsdnSiteID(String name, String tenant){
        DB database = this.getDB(tenant);
        DBCollection collection = database.getCollection("fedsdnSite");
-       BasicDBObject researchField = new BasicDBObject("name", name);
+       BasicDBObject researchField = new BasicDBObject("siteEntry.name", name);
        DBObject risultato = collection.findOne(researchField);
-       
-       return ((Number) risultato.get("id")).intValue();//((Number) mapObj.get("autostart")).intValue()//(float) ((double) result.get(v))
+       Object r=((Number) risultato.get("siteID"));
+       if(r instanceof Integer)
+           return ((Integer) r).intValue();
+       else
+        return ((Double)r).intValue();//((Number) mapObj.get("autostart")).intValue()//(float) ((double) result.get(v))
     }
+    
      
     /* 
     public void insertfedsdnFednet(String json){

@@ -70,7 +70,28 @@ public class FA_client4Tenant extends FA_REST_Client{
         }
         return result;
     }
-   
+    
+    /**
+     * This function is used to create Tenant element inside FA. 
+     * @return 
+     * @author gtricomi
+     */
+    public boolean createTenantFA(JSONObject TenantEntry, String faURL)throws WSException{
+        boolean result= true;
+        
+        HttpBasicAuthFilter auth=new HttpBasicAuthFilter(this.getUserName(), this.getPassword());
+        Response r=this.createInsertingrequest("http://"+faURL+"/net-fa/tenants",TenantEntry,auth,"post");
+        try{
+           this.checkResponse(r);
+        }
+        catch(WSException wse){
+            LOGGER.error("Exception occurred in createTenantFA method, the web service has answer with bad status!\n"+wse.getMessage());
+            result=false;
+            throw wse;
+        }
+        return result;
+    }
+    
     public boolean deleteTenantFA(String tenantID, String faURL)throws WSException{
         boolean result= true;
         HttpBasicAuthFilter auth=new HttpBasicAuthFilter(this.getUserName(), this.getPassword());
