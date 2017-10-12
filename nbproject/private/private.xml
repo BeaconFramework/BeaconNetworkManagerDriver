@@ -10,8 +10,9 @@
             <file>file:/home/giuseppe/NetBeansProjects/BeaconNetworkManagerDriver/src/java/API/EASTAPI/UsersResource.java</file>
             <file>file:/home/giuseppe/NetBeansProjects/BeaconNetworkManagerDriver/src/java/API/EASTAPI/LinksResource.java</file>
             <file>file:/home/giuseppe/NetBeansProjects/BeaconNetworkManagerDriver/src/java/API/SOUTHBR/test.java</file>
-            <file>file:/home/giuseppe/NetBeansProjects/BeaconNetworkManagerDriver/src/java/MDBInt/DBMongo.java</file>
             <file>file:/home/giuseppe/NetBeansProjects/BeaconNetworkManagerDriver/src/java/API/SOUTHBR/FA_client4Network.java</file>
+            <file>file:/home/giuseppe/NetBeansProjects/BeaconNetworkManagerDriver/src/java/MDBInt/DBMongo.java</file>
+            <file>file:/home/giuseppe/NetBeansProjects/BeaconNetworkManagerDriver/src/java/API/EASTAPI/NetworksegmentResource.java</file>
         </group>
     </open-files>
 </project-private>

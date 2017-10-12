@@ -459,7 +459,7 @@ public class DBMongo {
         } else {
             o = uuid.next();
             BasicDBObject bdo = (BasicDBObject) o;
-            System.out.println(bdo.get("entrySiteTab"));
+            System.out.println("BDO"+bdo.get("siteEntry"));
             return bdo.get("entrySiteTab").toString();
         }
     }
@@ -1892,7 +1892,7 @@ public String getMapInfo(String dbName, String uuidTemplate) {
     public String getTenantuuidfromborrower(String tenant,String cmp_endpoint){
        DB database = this.getDB(this.identityDB);
        DBCollection collection = database.getCollection("fedtenanttoBor");
-       BasicDBObject researchField = new BasicDBObject("fedUuid", tenant);
+       BasicDBObject researchField = new BasicDBObject("tenantName", tenant);
        researchField.append("cmp_endpoint", cmp_endpoint);
        DBObject risultato = collection.findOne(researchField);
        String tenantuuid=(String)risultato.get("fedUuid");
@@ -1918,8 +1918,7 @@ public String getMapInfo(String dbName, String uuidTemplate) {
             if ( ((String)risultato.get("password")).equals(password) ) return true;
             else return false;
         }catch(Exception ex){
-            return false;    
-        }
+            return false;            }
     }
     
     public String getTenantToken(String field,String value){
@@ -2046,15 +2045,23 @@ public String getMapInfo(String dbName, String uuidTemplate) {
     }
     */
     
-    public int getfedsdnFednetIDFromBNMParams(String tenantName,String subnet, String site)throws JSONException {
+    public int getfedsdnFednetIDFromBNMParams(String tenantName,String subnet, String site)throws JSONException,MDBIException {
         DB database = this.getDB(tenantName);
         DBCollection collection = database.getCollection("fedsdnNetSeg");
         BasicDBObject researchField = new BasicDBObject("netsegEntry.name", subnet);
-        researchField.append("referenceSite", site);
-        DBObject risultato = collection.findOne(researchField);
-        return ((Number) risultato.get("fednetID")).intValue();
-
+        //researchField.append("referenceSite", site);
+        DBCursor risultato = collection.find(researchField);
+        Iterator it=risultato.iterator();
+        BasicDBObject tmpres=null;
+        while(it.hasNext())
+        {
+            tmpres=(BasicDBObject)it.next();
+            if(site.equals((String)tmpres.get("referenceSite")))
+                return ((Number) tmpres.get("fednetID")).intValue();
+        }
+        throw new MDBIException("It is not possible retrieve the FEDNET ID for the netsegment "+ subnet);
     }
+
     
     public int getVersionBNATables(String tenantName, int fednetID, String site) throws JSONException {
         DB database = this.getDB(tenantName);
@@ -2101,13 +2108,14 @@ public String getMapInfo(String dbName, String uuidTemplate) {
        JSONObject finalres=new JSONObject((String)risultato.get("fednetEntry"));
        return finalres.getString("name");
     }
-    public String getfedsdnFednet(long fednetId, String tenant)throws JSONException{
+    public String getfedsdnFednet(int fednetId, String tenant)throws JSONException{
        DB database = this.getDB(tenant);
        DBCollection collection = database.getCollection("fedsdnFednet");
-       BasicDBObject researchField = new BasicDBObject("fednetID", fednetId);
+       BasicDBObject researchField = new BasicDBObject("fednetID", new Integer(fednetId).toString());
        DBObject risultato = collection.findOne(researchField);
-       JSONObject finalres=new JSONObject((String)risultato.get("fednetEntry"));
-       return finalres.toString(0);
+       String tmp=((BasicDBObject)risultato.get("fednetEntry")).toString();
+       //JSONObject finalres=new JSONObject(tmp);
+       return tmp;//finalres.toString(0);
     }
      public int getfedsdnFednetID(String fednet_name, String tenant){
        DB database = this.getDB(tenant);

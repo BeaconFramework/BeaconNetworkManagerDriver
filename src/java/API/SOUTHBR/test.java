@@ -99,7 +99,7 @@ public class test {
         //FAclient4networks istantiation.
         FA_client4Network fan1=new FA_client4Network("http://10.9.1.165:5000v2.0","review","review","0penstack");
         try {
-            JSONObject rr=fan1.getNetworkTableList("http://10.9.1.169:", "d044e4b3bc384a5daa3678b87f97e3c2");
+            JSONObject rr=fan1.getNetworkTableList("http://10.9.1.169:4567", "d044e4b3bc384a5daa3678b87f97e3c2");
             System.out.println(rr.toString(0));
         } catch (Exception ex) {
             Logger.getLogger(test.class.getName()).log(Level.SEVERE, null, ex);

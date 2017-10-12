@@ -94,19 +94,26 @@ public class UsersResource {
         {   //username borrower,password borrower, endpoint 
             //1: verifica username e password
             //2: questo borrower possiede un'accordo con la cloud identificata dall'endpoint
-            
-            input=new JSONObject(content);
+            //"{\n  \"username\": \"admin\",\n  \"password\": \"0penstack\",\n  \"cmp_endpoint\": \"http://ctrl-t2:5000/v2.0\"\n}"
+            String beta=content.replace("\"{", "{");
+            beta=beta.replace("}\"", "}");
+            beta=beta.replace("\\\"", "\"");
+            beta=beta.replace("\\n", "");
+            input=new org.json.JSONObject(beta);
+            //input=new JSONObject(content);
             /*
             LOGGER.error("INPUT: "+input.toString());
             System.out.println("SOUT INPUT: "+input.toString());
             */
             
-            username=(String)input.get("username");
-            tenant=(String)input.get("username");
+            //username=(String)input.get("username");
+            //tenant=(String)input.get("username");
+            username=((String)input.get("username")).split("@@@")[1];
+            tenant=((String)input.get("username")).split("@@@")[0];
             pass=(String)input.get("password");
             cmp_endpoint=(String)input.get("cmp_endpoint");
             LOGGER.error("INPUT : username and tenant--> "+username+" password--> "+pass+ " endpoint--> "+cmp_endpoint);
-            System.out.println("SOUT INPUT: username and tenant--> "+username+" password--> "+pass+ " endpoint--> "+cmp_endpoint);
+            System.out.println("JSOUT INPUT: username and tenant--> "+username+" password--> "+pass+ " endpoint--> "+cmp_endpoint);
             
             /*
             username=((String)input.get("username")).split("@@")[1];
@@ -136,18 +143,19 @@ public class UsersResource {
         }
         
         //CREARE OGGETTO DA PASSARE AL WEB SERVICE
+        /*
         input.put("tenant", tenant);
         input.put("username", username);
         input.put("endPoint", cmp_endpoint);
         input.put("passwordUser", pass);
-        
+        */
         // INVOCARE WEBSERVICE
         //String baseBBURL="/fednet/northBr/site/{sitename}/{tenantname}/users"; /////////* OTTENERE BASE URL BB*/////////////
         
         DBMongo m = new DBMongo();
         m.init(configFile);
         m.connectLocale("10.9.240.1");
-        boolean result = m.verifyTenantCredentials(username, pass);
+        boolean result = m.verifyTenantCredentials(tenant, pass);
         if(result){
             String token = m.getTenantToken("federationTenant", tenant);
             try {
@@ -163,6 +171,9 @@ public class UsersResource {
                     reply.put("returncode", 0); 
                     reply.put("errormesg", "None");
                     reply.put("token",token);
+                    KeystoneTest key = new KeystoneTest(tenant,"admin", "0penstack", cmp_endpoint);
+                    String aaa=key.getTenantId(tenant);
+                    //reply.put("tenant_id",aaa);
                     reply.put("tenant_id", m.getTenantuuidfromborrower(tenant, cmp_endpoint));
                     return reply.toString();
                 }
