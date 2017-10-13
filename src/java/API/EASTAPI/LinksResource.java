@@ -129,7 +129,7 @@ public class LinksResource {
             m.init(configFile);
              m.connectLocale("10.9.240.1");
   /////////////
-             lic.setToken("3efb8c19-92a9-43bc-75d2-e4ff6f53cd2a");
+             //lic.setToken("3efb8c19-92a9-43bc-75d2-e4ff6f53cd2a");
   //////////////7
              
             String federationUser = m.getTenantName("token", lic.getToken());
@@ -238,11 +238,11 @@ public class LinksResource {
                         siteMap.put(new org.json.JSONObject(m.getSiteTables(federationUser,refSite,bb_version)));
                     FA_client4Sites fas=new FA_client4Sites(endpoint,federationUser,user,pass);
                     org.json.JSONObject fa_url=new org.json.JSONObject(m.getFAInfo(federationUser, cloudID));
-                    this.modify_siteNames(siteMap, 0, sites);
+                    siteMap=(org.json.JSONArray)this.modify_siteNames(siteMap, 0, sites);
                     Response r=fas.createSiteTable(tenantEntry.getString("tenant_id"), fa_url.getString("Ip")+":"+fa_url.getString("Port"), siteMap.toString(0));//aggiungere check
                     ////3 Inserire NetTable su BNA
                     FA_client4Network fan=new FA_client4Network(endpoint,federationUser,user,pass);
-                    this.modify_siteNames(tab, 1, sites);
+                    tab = (org.json.JSONObject)this.modify_siteNames(tab, 1, sites);
                     Response rn=fan.createNetTable(tenantEntry.getString("tenant_id"), fa_url.getString("Ip")+":"+fa_url.getString("Port"), tab.toString(0));//aggiungere check
                 }
                 catch (MDBIException ex) {

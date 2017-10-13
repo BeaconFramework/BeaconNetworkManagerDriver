@@ -121,15 +121,16 @@ public class NetworksegmentResource {
             reply.append("network_info", "");
             return reply.toString();
         }
-
+        JSONObject federationcredential=null,federatedcredential=null;
         try {
             //verrà restituito l'OSFFM endpoint
             //ricavare dal simple IDM gli elementi che mi mancano ovvero:
             //String endpoint, String tenant, String user, String password, String region
             tenantDB = this.db.getTenantName("token", OSF_token);
-            //JSONObject federationcredential = new JSONObject(this.db.getFederationCredential(tenantDB, OSF_token));
-
+            federationcredential = new JSONObject(this.db.getFederationCredential(tenantDB, OSF_token));
             datacenter_id = this.db.getDatacenterIDfrom_cmpEndpoint(tenantDB, OSF_cmp_endpoint);
+            federatedcredential = new JSONObject(this.db.getFederatedCredentialfromTok(tenantDB, federationcredential.getString("federationUser"), OSF_token, datacenter_id));
+            
             System.out.println("DC ID: " + datacenter_id);
         } catch (MDBIException e) {
             reply.append("returncode", 1);
@@ -141,10 +142,15 @@ public class NetworksegmentResource {
         try {
             netseg = this.db.getfedsdnNetSeg(OSF_network_segment_id, datacenter_id, tenantDB);
             if (netseg == null) {
-                reply.append("returncode", 1);
-                reply.append("errormesg", "Netegment Not present on cloud pointed by cmp_endpoint");
-                reply.append("network_info", "");
-                return reply.toString();
+              //  boolean error=false;
+                //NeutronTest neutron = new NeutronTest(OSF_cmp_endpoint, federationcredential.getString("federationUser"), federatedcredential.getString("federatedUser"), federatedcredential.getString("federatedPassword"), "RegionOne");
+                //Network netSearched = neutron.getNetworkFromId(OSF_network_segment_id);
+              //  if (error) {
+                    reply.append("returncode", 1);
+                    reply.append("errormesg", "Netegment Not present on cloud pointed by cmp_endpoint");
+                    reply.append("network_info", "");
+                    return reply.toString();
+              //  }
             } else {
                 network_info = new JSONObject();
                 JSONObject netseg_obj = new JSONObject(netseg);
