@@ -64,7 +64,8 @@ public class LinksResource {
     @Context
     private UriInfo context;
     static final Logger LOGGER = Logger.getLogger(LinksResource.class);
-    String configFile="/home/giuseppe/NetBeansProjects/BeaconNetworkManagerDriver/web/WEB-INF/configuration_bigDataPlugin.xml";
+    String configFile="/home/beacon/beaconConf/configuration_bigDataPlugin.xml";//"/home/giuseppe/NetBeansProjects/BeaconNetworkManagerDriver/web/WEB-INF/configuration_bigDataPlugin.xml";
+    //String configFile="/home/beacon/beaconConf/configuration_bigDataPlugin.xml";
     /**
      * Creates a new instance of LinksResource
      */
@@ -448,7 +449,8 @@ public class LinksResource {
     
     public void createFednetsInSiteTab(String site){
         DBMongo m = new DBMongo();
-        m.init("/home/carmelo/BeaconProject/newBBP/BB/web/WEB-INF/configuration_bigDataPlugin.xml");
+        //String configFile="/home/beacon/beaconConf/configuration_bigDataPlugin.xml";
+        m.init("/home/beacon/beaconConf/configuration_bigDataPlugin.xml");
         m.connectLocale("10.9.240.1");
 
         String result = m.getFednetsInSiteTablesFromFedTenant("review", site, "fednets", null);
@@ -465,7 +467,7 @@ public class LinksResource {
     
     public void createFednetsInSiteTabVersion(String site, Integer version){
         DBMongo m = new DBMongo();
-        m.init("/home/carmelo/BeaconProject/newBBP/BB/web/WEB-INF/configuration_bigDataPlugin.xml");
+        m.init("/home/beacon/beaconConf/configuration_bigDataPlugin.xmll");
         m.connectLocale("10.9.240.1");
 
         String result = m.getFednetsInSiteTablesFromFedTenant("review", site, "fednets", version);
@@ -483,7 +485,7 @@ public class LinksResource {
     
     public void createTenantTab(String token, String site){
         DBMongo m = new DBMongo();
-        m.init("/home/carmelo/BeaconProject/newBBP/BB/web/WEB-INF/configuration_bigDataPlugin.xml");
+        m.init("/home/beacon/beaconConf/configuration_bigDataPlugin.xml");
         m.connectLocale("10.9.240.1");
 
         String tenant_name = m.getTenantName("token", token);
@@ -502,7 +504,7 @@ public class LinksResource {
     
     public void createTenantTabVersion(String token, String site, Integer version){
         DBMongo m = new DBMongo();
-        m.init("/home/carmelo/BeaconProject/newBBP/BB/web/WEB-INF/configuration_bigDataPlugin.xml");
+        m.init("/home/beacon/beaconConf/configuration_bigDataPlugin.xml");
         m.connectLocale("10.9.240.1");
 
         String tenant_name = m.getTenantName("token", token);
@@ -520,7 +522,7 @@ public class LinksResource {
     
     public void createSiteTab(String site){
         DBMongo m = new DBMongo();
-        m.init("/home/carmelo/BeaconProject/newBBP/BB/web/WEB-INF/configuration_bigDataPlugin.xml");
+        m.init("/home/beacon/beaconConf/configuration_bigDataPlugin.xml");
         m.connectLocale("10.9.240.1");
 
         String result = m.getSiteTablesFromFedTenant("review", site, "entrySiteTab", null);
@@ -537,7 +539,7 @@ public class LinksResource {
     
     public void createSiteTabVersion(String site, Integer version){
         DBMongo m = new DBMongo();
-        m.init("/home/carmelo/BeaconProject/newBBP/BB/web/WEB-INF/configuration_bigDataPlugin.xml");
+        m.init("/home/beacon/beaconConf/configuration_bigDataPlugin.xml");
         m.connectLocale("10.9.240.1");
 
         String result = m.getSiteTablesFromFedTenant("review", site, "entrySiteTab", version);
@@ -568,7 +570,7 @@ public class LinksResource {
         JSONArray netTable = new JSONArray();
         HashMap site_seg = new HashMap();
 
-        db.init("/home/apanarello/BeaconProject/newBBP/BB/web/WEB-INF/configuration_bigDataPlugin.xml");
+        db.init("/home/beacon/beaconConf/configuration_bigDataPlugin.xml");
 
         db.connectLocale("10.9.240.1");
         // TODO code application logic here
@@ -666,7 +668,7 @@ public class LinksResource {
         DBMongo db = new DBMongo();
         HashMap site_hm = new HashMap();
         
-        db.init("/home/carmelo/NetBeansProjects/BB/web/WEB-INF/configuration_bigDataPlugin.xml");
+        db.init("/home/beacon/beaconConf/configuration_bigDataPlugin.xml");
         db.connectLocale("10.9.240.1");
         tenant = db.getTenantDBName("token", token);
 
@@ -755,7 +757,7 @@ public class LinksResource {
         DBMongo db = new DBMongo();
         HashMap tenant_hm = new HashMap();
         
-        db.init("/home/carmelo/NetBeansProjects/BB/web/WEB-INF/configuration_bigDataPlugin.xml");
+        db.init("/home/beacon/beaconConf/configuration_bigDataPlugin.xml");
         db.connectLocale("10.9.240.1");
         tenant = db.getTenantDBName("token", token);
 
@@ -969,27 +971,27 @@ public class LinksResource {
                 try {
                     for (int i = 0; i < ja.length(); i++) {
                         org.json.JSONObject jo = ja.getJSONObject(i);
-                        if ((sites.contains("UME")) && (sites.contains("CETIC")) && (!sites.contains("ONE"))) {
-                            if (jo.getString("name").equals("UME")) {
+                        if (((sites.contains("UME"))||(sites.contains("UME_NFV")) )&& ((sites.contains("CETIC"))|| (sites.contains("CETIC_NFV")))&& (!sites.contains("ONE"))) {
+                            if ((jo.getString("name").equals("UME"))||(jo.getString("name").equals("UME_NFV"))) {
                                 jo.remove("name");
                                 jo.put("name", "site1");
-                            } else if (jo.getString("name").equals("CETIC")) {
+                            } else if ((jo.getString("name").equals("CETIC"))||(jo.getString("name").equals("CETIC_NFV"))) {
                                 jo.remove("name");
                                 jo.put("name", "site2");
                             }
-                        } else if ((sites.contains("ONE")) && (sites.contains("UME"))) {
-                            if (jo.getString("name").equals("UME")) {
+                        } else if ((sites.contains("ONE")) && ((sites.contains("UME"))||(sites.contains("UME_NFV")) )) {
+                            if ((jo.getString("name").equals("UME"))||(jo.getString("name").equals("UME_NFV"))) {
                                 jo.remove("name");
                                 jo.put("name", "site1");
                             } else if (jo.getString("name").equals("ONE")) {
                                 jo.remove("name");
                                 jo.put("name", "site2");
                             }
-                        } else if ((sites.contains("ONE")) && (sites.contains("CETIC"))) {
+                        } else if ((sites.contains("ONE")) && ((sites.contains("CETIC"))||(sites.contains("CETIC_NFV"))) ){
                             if (jo.getString("name").equals("ONE")) {
                                 jo.remove("name");
                                 jo.put("name", "site1");
-                            } else if (jo.getString("name").equals("CETIC")) {
+                            } else if ((jo.getString("name").equals("CETIC"))||(jo.getString("name").equals("CETIC_NFV"))) {
                                 jo.remove("name");
                                 jo.put("name", "site2");
                             }
@@ -1010,27 +1012,27 @@ public class LinksResource {
 
                         for (int i = 0; i < ja.length(); i++) {
                             org.json.JSONObject jo = ja.getJSONObject(i);
-                            if ((sites.contains("UME")) && (sites.contains("CETIC")) && (!sites.contains("ONE"))) {
-                                if (jo.getString("site_name").equals("UME")) {
+                            if (((sites.contains("UME"))||(sites.contains("UME_NFV")) )&& ((sites.contains("CETIC"))|| (sites.contains("CETIC_NFV")))&& (!sites.contains("ONE"))){
+                                if ((jo.getString("site_name").equals("UME"))||(jo.getString("site_name").equals("UME_NFV"))) {
                                     jo.remove("site_name");
                                     jo.put("site_name", "site1");
-                                } else if (jo.getString("site_name").equals("CETIC")) {
+                                } else if ((jo.getString("site_name").equals("CETIC"))||(jo.getString("site_name").equals("CETIC_NFV"))) {
                                     jo.remove("site_name");
                                     jo.put("site_name", "site2");
                                 }
-                            } else if ((sites.contains("ONE")) && (sites.contains("UME"))) {
-                                if (jo.getString("site_name").equals("UME")) {
+                            } else if ((sites.contains("ONE")) && ((sites.contains("UME"))||(sites.contains("UME_NFV")) )) {
+                                if ((jo.getString("site_name").equals("UME"))||(jo.getString("site_name").equals("UME_NFV"))) {
                                     jo.remove("site_name");
                                     jo.put("site_name", "site1");
                                 } else if (jo.getString("site_name").equals("ONE")) {
                                     jo.remove("site_name");
                                     jo.put("site_name", "site2");
                                 }
-                            } else if ((sites.contains("ONE")) && (sites.contains("CETIC"))) {
+                            } else if ((sites.contains("ONE")) && ((sites.contains("CETIC"))||(sites.contains("CETIC_NFV"))) ){
                                 if (jo.getString("site_name").equals("ONE")) {
                                     jo.remove("site_name");
                                     jo.put("site_name", "site1");
-                                } else if (jo.getString("site_name").equals("CETIC")) {
+                                } else if ((jo.getString("site_name").equals("CETIC"))||(jo.getString("site_name").equals("CETIC_NFV"))) {
                                     jo.remove("site_name");
                                     jo.put("site_name", "site2");
                                 }

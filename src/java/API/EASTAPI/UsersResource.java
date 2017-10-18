@@ -88,8 +88,8 @@ public class UsersResource {
         String cmp_endpoint=null;
         String region="RegionOne";
         
-
-        String configFile="/home/giuseppe/NetBeansProjects/BeaconNetworkManagerDriver/web/WEB-INF/configuration_bigDataPlugin.xml";
+        String configFile="/home/beacon/beaconConf/configuration_bigDataPlugin.xml";
+        //String configFile="/home/giuseppe/NetBeansProjects/BeaconNetworkManagerDriver/web/WEB-INF/configuration_bigDataPlugin.xml";
         try 
         {   //username borrower,password borrower, endpoint 
             //1: verifica username e password
@@ -105,7 +105,6 @@ public class UsersResource {
             LOGGER.error("INPUT: "+input.toString());
             System.out.println("SOUT INPUT: "+input.toString());
             */
-            
             //username=(String)input.get("username");
             //tenant=(String)input.get("username");
             username=((String)input.get("username")).split("@@@")[1];
@@ -173,8 +172,8 @@ public class UsersResource {
                     reply.put("token",token);
                     KeystoneTest key = new KeystoneTest(tenant,"admin", "0penstack", cmp_endpoint);
                     String aaa=key.getTenantId(tenant);
-                    //reply.put("tenant_id",aaa);
-                    reply.put("tenant_id", m.getTenantuuidfromborrower(tenant, cmp_endpoint));
+                    reply.put("tenant_id",aaa);
+                    //reply.put("tenant_id", m.getTenantuuidfromborrower(tenant, cmp_endpoint));
                     return reply.toString();
                 }
             } catch (MDBIException ex) {

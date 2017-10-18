@@ -6,6 +6,7 @@
             <file>file:/home/giuseppe/NetBeansProjects/BeaconNetworkManagerDriver/src/java/API/EASTAPI/LinksResource.java</file>
         </group>
         <group name="BEACON">
+            <file>file:/home/giuseppe/NetBeansProjects/BeaconNetworkManagerDriver/src/java/API/EASTAPI/Clients/NetworkSegment.java</file>
             <file>file:/home/giuseppe/NetBeansProjects/BeaconNetworkManagerDriver/src/java/MDBInt/testClass.java</file>
             <file>file:/home/giuseppe/NetBeansProjects/BeaconNetworkManagerDriver/src/java/API/EASTAPI/UsersResource.java</file>
             <file>file:/home/giuseppe/NetBeansProjects/BeaconNetworkManagerDriver/src/java/API/EASTAPI/LinksResource.java</file>

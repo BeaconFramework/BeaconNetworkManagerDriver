@@ -48,6 +48,7 @@ public class testClass {
         //m.init("/home/giuseppe/NetBeansProjects/BeaconNetworkManagerDriver/web/WEB-INF/configuration_bigDataPlugin.xml");
         m.connectLocale("10.9.240.1");
         try{
+            m.getSiteTables("review","CETIC",1,"UME");
             Object o=m.getfedsdnSiteID("CETIC", "review");
         //m.updateTableData("review", "site2", 20, 100);
         System.out.println(m.getVersionBNATables("review", 7, "CETIC"));

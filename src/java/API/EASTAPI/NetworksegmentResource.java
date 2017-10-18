@@ -69,8 +69,8 @@ public class NetworksegmentResource {
      * Creates a new instance of NetworksegmentResource
      */
     public NetworksegmentResource() {
-        String configFile="/home/carmelo/NetBeansProjects/BeaconNetworkManagerDriver/web/WEB-INF/configuration_bigDataPlugin.xml";
-        
+        String configFile="/home/beacon/beaconConf/configuration_bigDataPlugin.xml";//"/home/carmelo/NetBeansProjects/BeaconNetworkManagerDriver/web/WEB-INF/configuration_bigDataPlugin.xml";
+        //String configFile="/home/beacon/beaconConf/configuration_bigDataPlugin.xml";
         sidm=new SimpleIDM(configFile);
         this.db = new DBMongo();
         this.db.init(configFile);

@@ -206,7 +206,7 @@ public class test {
         // INIZIO CODICE
         //--------------------------------------------------
         DBMongo m = new DBMongo();
-        m.init("/home/giuseppe/NetBeansProjects/BeaconNetworkManagerDriver/web/WEB-INF/configuration_bigDataPlugin.xml");
+        m.init("/home/beacon/beaconConf/configuration_bigDataPlugin.xml");//"/home/giuseppe/NetBeansProjects/BeaconNetworkManagerDriver/web/WEB-INF/configuration_bigDataPlugin.xml");
         m.connectLocale("10.9.240.1");
         
         

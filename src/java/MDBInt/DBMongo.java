@@ -132,7 +132,7 @@ public class DBMongo {
         //String file=configFile;
         String file=System.getenv("HOME");
         if(file==null){
-            file="/opt/tomcat/webapps/OSFFM/WEB-INF/configuration_bigDataPlugin.xml";
+            file="/home/beacon/beaconConf/configuration_bigDataPlugin.xml";//"/opt/tomcat/webapps/OSFFM/WEB-INF/configuration_bigDataPlugin.xml";
             
             /*String restkey="[";
             String rest="["; 
@@ -149,7 +149,7 @@ public class DBMongo {
         else
         {
             
-            file=file+"/webapps/OSFFM/WEB-INF/configuration_bigDataPlugin.xml";
+            file="/home/beacon/beaconConf/configuration_bigDataPlugin.xml";//file+"/webapps/OSFFM/WEB-INF/configuration_bigDataPlugin.xml";
         }
         Element params;
         try {
@@ -448,7 +448,6 @@ public class DBMongo {
         Object o = null;
         DB database = this.getDB(dbName);
         DBCollection collection = database.getCollection("siteTables");
-        
         BasicDBObject resQuery=new BasicDBObject("referenceSite",faSite).append("version", version);
 
         DBCursor uuid = collection.find(resQuery);
@@ -463,7 +462,33 @@ public class DBMongo {
             return bdo.get("siteEntry").toString();
         }
     }
-    
+    /**
+     * 
+     * @param dbName
+     * @param faSite, this is the cloud Id
+     * @param version
+     * @return
+     * @author caromeo
+     */
+    public String getSiteTables(String dbName, String faSite, Integer version,String innerSite) {
+
+        Object o = null;
+        DB database = this.getDB(dbName);
+        DBCollection collection = database.getCollection("siteTables");
+        BasicDBObject resQuery=new BasicDBObject("referenceSite",faSite).append("version", version).append("siteEntry.name",innerSite);
+
+        DBCursor uuid = collection.find(resQuery);
+        System.out.println("");
+        
+        if (!uuid.hasNext()) {
+            return null;
+        } else {
+            o = uuid.next();
+            BasicDBObject bdo = (BasicDBObject) o;
+            System.out.println("BDO"+bdo.get("siteEntry"));
+            return bdo.get("siteEntry").toString();
+        }
+    }
 
     /**
      * 
@@ -2074,8 +2099,10 @@ public String getMapInfo(String dbName, String uuidTemplate) {
         collection = database.getCollection("BNATableData");
         researchField = new BasicDBObject("fedNet", fednet);
         researchField.append("referenceSite", site);
-        risultato = collection.findOne(researchField);
-        return ((Number) risultato.get("version")).intValue();
+        //risultato = collection.findOne(researchField);
+        BasicDBObject sortQuery= new BasicDBObject("version", -1);
+        String res = this.conditionedResearch(collection, researchField,sortQuery);
+        return new JSONObject(res).getInt("version");
     }
     
     
