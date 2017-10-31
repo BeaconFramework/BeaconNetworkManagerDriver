@@ -48,6 +48,8 @@ public class testClass {
         //m.init("/home/giuseppe/NetBeansProjects/BeaconNetworkManagerDriver/web/WEB-INF/configuration_bigDataPlugin.xml");
         m.connectLocale("10.9.240.1");
         try{
+            m.getFederatedCredentialfromTok("review","admin","3efb8c19-92a9-43bc-75d2-e4ff6f53cd2a", "ONE");
+            System.out.println(m.getONETenantTables("review", "ONE"));
             m.getSiteTables("review","CETIC",1,"UME");
             Object o=m.getfedsdnSiteID("CETIC", "review");
         //m.updateTableData("review", "site2", 20, 100);

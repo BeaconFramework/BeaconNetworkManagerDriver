@@ -451,7 +451,7 @@ public class DBMongo {
         BasicDBObject resQuery=new BasicDBObject("referenceSite",faSite).append("version", version);
 
         DBCursor uuid = collection.find(resQuery);
-        System.out.println("");
+        System.out.println(resQuery);
         
         if (!uuid.hasNext()) {
             return null;
@@ -462,6 +462,7 @@ public class DBMongo {
             return bdo.get("siteEntry").toString();
         }
     }
+    
     /**
      * 
      * @param dbName
@@ -693,7 +694,25 @@ public void insertSiteTables(String dbName,String faSite, String docJSON, Intege
             return bdo.get("entryTenantTab").toString();
         }
     }
+    
+    public String getONETenantTables(String dbName, String faSite) {
 
+        Object o = null;
+        DB database = this.getDB(dbName);
+        DBCollection collection = database.getCollection("ONEtenantTab");
+        
+        BasicDBObject resQuery=new BasicDBObject("referenceSite",faSite);
+
+        DBCursor uuid = collection.find(resQuery);
+        System.out.println("");
+        if (!uuid.hasNext()) {
+            return null;
+        } else {
+            o = uuid.next();
+            BasicDBObject bdo = (BasicDBObject) o;
+            return bdo.get("entryTenantTab").toString();
+        }
+    }
     /**
      * 
      * @param dbName
@@ -2428,7 +2447,13 @@ public String getMapInfo(String dbName, String uuidTemplate) {
        
     }
     
-    
+    public String getONEnetEntry(String tenant){
+        DB database = this.getDB(tenant);
+       DBCollection collection = database.getCollection("ONEnetTab");
+       BasicDBObject researchField = new BasicDBObject("entryNetTab.site_name" , "ONE");
+       DBObject risultato = collection.findOne(researchField);
+       return risultato.toString();
+    }
 
     
     
