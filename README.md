@@ -20,3 +20,6 @@ i) http://[BNMD_BASE_PATH]//fednet/eastBr/FA_Management
 ii) http://[BNMD_BASE_PATH]//fednet/eastBr/network
 
 iii) http://[BNMD_BASE_PATH]//fednet/eastBr/user
+
+
+It is tested on Tomcat 8.0.27
