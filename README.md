@@ -15,11 +15,11 @@ To instantiate it, the deployer have to create a directory in the path: "/home/b
 
 Web serices exposed by BNMD are:
 
-i) http://[BNMD_BASE_PATH]//fednet/eastBr/FA_Management
+i) http://[BNMD_BASE_PATH]/fednet/eastBr/FA_Management
 
-ii) http://[BNMD_BASE_PATH]//fednet/eastBr/network
+ii) http://[BNMD_BASE_PATH]/fednet/eastBr/network
 
-iii) http://[BNMD_BASE_PATH]//fednet/eastBr/user
+iii) http://[BNMD_BASE_PATH]/fednet/eastBr/user
 
 
 It is tested on Tomcat 8.0.27
